@@ -438,50 +438,195 @@
 .producerList {
   margin-top: 1rem;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.producerRow {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+  background: var(--colorNeutralBackground1, rgba(0,0,0,0.3));
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--colorNeutralStroke1, rgba(255,255,255,0.08));
 }
 
 .producerItem {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--colorNeutralBackground1, rgba(0,0,0,0.3));
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: var(--colorNeutralForeground2, rgba(255,255,255,0.8));
-  position: relative;
+  font-size: 0.9rem;
+  color: var(--colorNeutralForeground2, rgba(255,255,255,0.9));
 }
 
-.removeProducerBtn {
-  display: none;
+.producerName {
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.pausePlayBtn {
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  color: rgba(255,255,255,0.5);
-  font-size: 1.1rem;
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: #4ade80;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
-  padding: 0 0 0 0.5rem;
-  line-height: 1;
-  transition: color 0.15s;
+  transition: all 0.15s;
+  margin-left: auto;
 }
 
-.producerItem:hover .removeProducerBtn {
+.pausePlayBtn:hover {
+  background: rgba(74, 222, 128, 0.25);
+  border-color: rgba(74, 222, 128, 0.5);
+}
+
+.pausePlayBtn.paused {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+.pausePlayBtn.paused:hover {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.expandBtn {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.removeProducerBtn:hover {
-  color: #ef4444;
+.expandBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
 }
 
-:global([data-theme="light"]) .removeProducerBtn {
-  color: rgba(0,0,0,0.4);
+.dotTrack {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 0 8px;
+  min-width: 300px;
 }
 
-:global([data-theme="light"]) .removeProducerBtn:hover {
-  color: #dc2626;
+.animatedDot {
+  position: absolute;
+  left: 8px;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle, #4ade80 0%, #22c55e 70%, transparent 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 4px #4ade80,
+    0 0 8px rgba(74, 222, 128, 0.5);
+  animation: dotScroll 12s linear forwards;
+}
+
+@keyframes dotScroll {
+  0% {
+    left: 8px;
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 18px);
+    opacity: 0;
+  }
+}
+
+.jsonPreview {
+  margin-top: 0.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  border: 1px solid rgba(74, 222, 128, 0.15);
+  overflow: hidden;
+  animation: expandIn 0.2s ease-out;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+.jsonCode {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.statusDot.paused {
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+
+:global([data-theme="light"]) .producerRow {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+:global([data-theme="light"]) .pausePlayBtn {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.3);
+  color: #16a34a;
+}
+
+:global([data-theme="light"]) .pausePlayBtn:hover {
+  background: rgba(22, 163, 74, 0.2);
+}
+
+:global([data-theme="light"]) .pausePlayBtn.paused {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.3);
+  color: #d97706;
+}
+
+:global([data-theme="light"]) .expandBtn {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme="light"]) .expandBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+:global([data-theme="light"]) .dotTrack {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:global([data-theme="light"]) .jsonPreview {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(22, 163, 74, 0.2);
 }
 
 /* Code Block */

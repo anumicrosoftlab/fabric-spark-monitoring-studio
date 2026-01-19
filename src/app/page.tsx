@@ -2,8 +2,18 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useEventHub } from '@/lib/useEventHub';
+import { useEventHubProducer, HeartbeatMessage } from '@/lib/useEventHubProducer';
 import { Highlight, themes } from 'prism-react-renderer';
 import styles from './page.module.css';
+
+interface Producer {
+  id: number;
+  name: string;
+  isPaused: boolean;
+  isExpanded: boolean;
+  lastSentMessage: HeartbeatMessage | null;
+  dots: { id: number; key: number }[];
+}
 
 export default function Home() {
   // Producer connection state (Read and Write)
@@ -18,8 +28,16 @@ export default function Home() {
   const [consumerWriteConnection, setConsumerWriteConnection] = useState('');
   const [consumerWriteStatus, setConsumerWriteStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
 
-  // Producer list
-  const [producers, setProducers] = useState<{ id: number; name: string }[]>([]);
+  // Producer list with extended state
+  const [producers, setProducers] = useState<Producer[]>([]);
+  const dotKeyRef = useRef(0);
+
+  // Event Hub Producer hook
+  const {
+    status: producerHubStatus,
+    connect: connectProducer,
+    sendHeartbeat,
+  } = useEventHubProducer();
 
   // Spark code from file
   const [sparkCode, setSparkCode] = useState('');
@@ -64,8 +82,16 @@ export default function Home() {
       .replace('{CONSUMER_WRITE_CONNECTION}', consumerWriteConnection);
   };
 
-  const testConnection = (value: string): 'connected' | 'error' | 'disconnected' => {
+  const testConnection = async (value: string, isProducerWrite: boolean = false): Promise<'connected' | 'error' | 'disconnected'> => {
     if (value.includes('Endpoint=sb://') && value.includes('EntityPath=')) {
+      // If this is the producer write connection, also connect the producer client
+      if (isProducerWrite) {
+        try {
+          await connectProducer(value);
+        } catch (err) {
+          console.error('Failed to connect producer:', err);
+        }
+      }
       return 'connected';
     } else if (value.length > 0) {
       return 'error';
@@ -80,12 +106,71 @@ export default function Home() {
     while (usedIds.has(nextId)) {
       nextId++;
     }
-    setProducers([...producers, { id: nextId, name: `Producer ${nextId}` }]);
+    setProducers([...producers, { 
+      id: nextId, 
+      name: `Producer ${nextId}`,
+      isPaused: false,
+      isExpanded: false,
+      lastSentMessage: null,
+      dots: [],
+    }]);
   };
 
-  const removeProducer = (id: number) => {
-    setProducers(producers.filter(p => p.id !== id));
+  const toggleProducerPause = (id: number) => {
+    setProducers(producers.map(p => 
+      p.id === id ? { ...p, isPaused: !p.isPaused } : p
+    ));
   };
+
+  const toggleProducerExpand = (id: number) => {
+    setProducers(producers.map(p => 
+      p.id === id ? { ...p, isExpanded: !p.isExpanded } : p
+    ));
+  };
+
+  // Send heartbeats every second for non-paused producers
+  useEffect(() => {
+    if (producerWriteStatus !== 'connected' || producerHubStatus !== 'connected') return;
+
+    const interval = setInterval(async () => {
+      for (const producer of producers) {
+        if (!producer.isPaused) {
+          const success = await sendHeartbeat(producer.name);
+          if (success) {
+            // Add a new dot and update lastSentMessage
+            const newDotKey = ++dotKeyRef.current;
+            setProducers(prev => prev.map(p => 
+              p.id === producer.id 
+                ? { 
+                    ...p, 
+                    dots: [...p.dots, { id: producer.id, key: newDotKey }],
+                    lastSentMessage: {
+                      ProducerName: producer.name,
+                      Timestamp: new Date().toISOString(),
+                      Healthy: true,
+                    }
+                  } 
+                : p
+            ));
+          }
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [producers, producerWriteStatus, producerHubStatus, sendHeartbeat]);
+
+  // Clean up dots after animation completes (12s animation)
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      setProducers(prev => prev.map(p => ({
+        ...p,
+        dots: p.dots.slice(-15) // Keep max 15 dots per producer (visible during 12s animation with 1s interval)
+      })));
+    }, 13000);
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
   const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -179,7 +264,7 @@ export default function Home() {
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={() => setProducerWriteStatus(testConnection(producerWriteConnection))}>
+              <button className={styles.testButton} onClick={async () => setProducerWriteStatus(await testConnection(producerWriteConnection, true))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -209,7 +294,7 @@ export default function Home() {
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={() => setProducerReadStatus(testConnection(producerReadConnection))}>
+              <button className={styles.testButton} onClick={async () => setProducerReadStatus(await testConnection(producerReadConnection))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -239,7 +324,7 @@ export default function Home() {
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={() => setConsumerWriteStatus(testConnection(consumerWriteConnection))}>
+              <button className={styles.testButton} onClick={async () => setConsumerWriteStatus(await testConnection(consumerWriteConnection))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -269,7 +354,7 @@ export default function Home() {
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={() => setConsumerReadStatus(testConnection(consumerReadConnection))}>
+              <button className={styles.testButton} onClick={async () => setConsumerReadStatus(await testConnection(consumerReadConnection))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -302,16 +387,74 @@ export default function Home() {
             {producers.length > 0 && (
               <div className={styles.producerList}>
                 {producers.map((p) => (
-                  <div key={p.id} className={styles.producerItem}>
-                    <span className={`${styles.statusDot} ${styles.connected}`} />
-                    {p.name}
-                    <button 
-                      className={styles.removeProducerBtn}
-                      onClick={() => removeProducer(p.id)}
-                      aria-label={`Remove ${p.name}`}
-                    >
-                      ×
-                    </button>
+                  <div key={p.id} className={styles.producerRow}>
+                    <div className={styles.producerItem}>
+                      <span className={`${styles.statusDot} ${p.isPaused ? styles.paused : styles.connected}`} />
+                      <span className={styles.producerName}>{p.name}</span>
+                      <button 
+                        className={`${styles.pausePlayBtn} ${p.isPaused ? styles.paused : ''}`}
+                        onClick={() => toggleProducerPause(p.id)}
+                        aria-label={p.isPaused ? `Resume ${p.name}` : `Pause ${p.name}`}
+                        title={p.isPaused ? 'Resume' : 'Pause'}
+                      >
+                        {p.isPaused ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                          </svg>
+                        )}
+                      </button>
+                      <button 
+                        className={styles.expandBtn}
+                        onClick={() => toggleProducerExpand(p.id)}
+                        aria-label={p.isExpanded ? 'Collapse JSON' : 'Expand JSON'}
+                        title={p.isExpanded ? 'Hide JSON' : 'Show JSON'}
+                      >
+                        <svg 
+                          width="14" 
+                          height="14" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2"
+                          style={{ transform: p.isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                        >
+                          <path d="M6 9l6 6 6-6"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div className={styles.dotTrack}>
+                      {p.dots.map((dot) => (
+                        <span 
+                          key={dot.key} 
+                          className={styles.animatedDot}
+                        />
+                      ))}
+                    </div>
+                    {p.isExpanded && p.lastSentMessage && (
+                      <div className={styles.jsonPreview}>
+                        <Highlight
+                          theme={themes.nightOwl}
+                          code={JSON.stringify(p.lastSentMessage, null, 2)}
+                          language="json"
+                        >
+                          {({ style, tokens, getLineProps, getTokenProps }) => (
+                            <pre className={styles.jsonCode} style={{ ...style, background: 'transparent' }}>
+                              {tokens.map((line, i) => (
+                                <div key={i} {...getLineProps({ line })}>
+                                  {line.map((token, key) => (
+                                    <span key={key} {...getTokenProps({ token })} />
+                                  ))}
+                                </div>
+                              ))}
+                            </pre>
+                          )}
+                        </Highlight>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
