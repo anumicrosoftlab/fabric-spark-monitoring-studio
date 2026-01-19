@@ -1,38 +1,46 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import {
-  Button,
-  Textarea,
-  Spinner,
-  Badge,
-  Tooltip,
-} from '@fluentui/react-components';
-import {
-  PlugConnected24Regular,
-  PlugDisconnected24Regular,
-  Delete24Regular,
-  Info24Regular,
-} from '@fluentui/react-icons';
+import { useEventHub } from '@/lib/useEventHub';
 import styles from './page.module.css';
-import { useEventHub, ConnectionStatus } from '@/lib/useEventHub';
-
-const SAMPLE_CONNECTION_STRING = `Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=your-key-name;SharedAccessKey=your-key;EntityPath=your-eventhub-name`;
 
 export default function Home() {
-  const [connectionString, setConnectionString] = useState('');
+  // Producer connection state
+  const [producerConnectionString, setProducerConnectionString] = useState('');
+  const [producerStatus, setProducerStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  
+  // Consumer connection state
+  const [consumerConnectionString, setConsumerConnectionString] = useState('');
+  const [consumerStatus, setConsumerStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+
+  // Producer list
+  const [producers, setProducers] = useState<{ id: number; name: string }[]>([]);
+  const [nextProducerId, setNextProducerId] = useState(1);
+
+  // Spark code from file
+  const [sparkCode, setSparkCode] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  // Live stream from actual Event Hub connection
   const {
-    status,
+    status: streamStatus,
     messages,
     error,
-    messageCount,
     connect,
     disconnect,
     clearMessages,
   } = useEventHub(200);
-  
+
   const streamEndRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+
+  // Load Spark code from file
+  useEffect(() => {
+    fetch('/spark-streaming-code.py')
+      .then(res => res.text())
+      .then(code => setSparkCode(code))
+      .catch(() => setSparkCode('# Failed to load Spark code'));
+  }, []);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -41,30 +49,37 @@ export default function Home() {
     }
   }, [messages, autoScroll]);
 
-  const handleConnect = async () => {
-    if (status === 'connected' || status === 'connecting') {
-      disconnect();
+  // Get Spark code with consumer connection string injected
+  const getSparkCodeWithConnection = () => {
+    if (!consumerConnectionString || consumerStatus !== 'connected') {
+      return sparkCode;
+    }
+    return sparkCode.replace('{CONSUMER_CONNECTION_STRING}', consumerConnectionString);
+  };
+
+  const testProducerConnection = () => {
+    if (producerConnectionString.includes('Endpoint=sb://') && producerConnectionString.includes('EntityPath=')) {
+      setProducerStatus('connected');
+    } else if (producerConnectionString.length > 0) {
+      setProducerStatus('error');
     } else {
-      await connect(connectionString);
+      setProducerStatus('disconnected');
     }
   };
 
-  const getStatusColor = (s: ConnectionStatus) => {
-    switch (s) {
-      case 'connected': return 'success';
-      case 'connecting': return 'warning';
-      case 'error': return 'danger';
-      default: return 'informative';
+  const testConsumerConnection = () => {
+    if (consumerConnectionString.includes('Endpoint=sb://') && consumerConnectionString.includes('EntityPath=')) {
+      setConsumerStatus('connected');
+    } else if (consumerConnectionString.length > 0) {
+      setConsumerStatus('error');
+    } else {
+      setConsumerStatus('disconnected');
     }
   };
 
-  const getStatusText = (s: ConnectionStatus) => {
-    switch (s) {
-      case 'connected': return 'Connected';
-      case 'connecting': return 'Connecting...';
-      case 'error': return 'Error';
-      default: return 'Disconnected';
-    }
+  const addProducer = () => {
+    setProducers([...producers, { id: nextProducerId, name: `Producer ${nextProducerId}` }]);
+    setNextProducerId(nextProducerId + 1);
   };
 
   const formatTimestamp = (date: Date) => {
@@ -77,152 +92,289 @@ export default function Home() {
     });
   };
 
+  const handleConnectStream = async () => {
+    if (streamStatus === 'connected' || streamStatus === 'connecting') {
+      disconnect();
+    } else if (consumerConnectionString) {
+      await connect(consumerConnectionString);
+    }
+  };
+
+  const copyCode = async () => {
+    const code = getSparkCodeWithConnection();
+    await navigator.clipboard.writeText(code);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
+
+  const isCodeEnabled = consumerStatus === 'connected';
+
   return (
     <div className={styles.container}>
-      {/* Main Content */}
-      <main className={styles.mainContent}>
-        {/* Connection Panel */}
-        <aside className={styles.connectionPanel}>
-          <h2 className={styles.sectionTitle}>
-            <PlugConnected24Regular />
-            Connection
-          </h2>
-
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>Event Hub Connection String</label>
-            <Textarea
-              className={styles.connectionInput}
-              placeholder={SAMPLE_CONNECTION_STRING}
-              value={connectionString}
-              onChange={(e) => setConnectionString(e.target.value)}
-              disabled={status === 'connected' || status === 'connecting'}
-              resize="vertical"
+      {/* Hero Section */}
+      <header className={styles.hero}>
+        <h1 className={styles.logo}>
+          <svg className={styles.logoIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              fill="url(#heartGradient)"
             />
-          </div>
+            <defs>
+              <linearGradient id="heartGradient" x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#f87171" />
+                <stop offset="0.5" stopColor="#ef4444" />
+                <stop offset="1" stopColor="#dc2626" />
+              </linearGradient>
+            </defs>
+          </svg>
+          heartbeat
+        </h1>
+        <p className={styles.tagline}>Stateful Stream Processing Demonstration with Fabric Spark.</p>
+        <span className={styles.badge}>Uses Fabric RTI EventStreams, Spark Structured Streaming with RocksDB</span>
+      </header>
 
-          <div className={styles.helpText}>
-            <Tooltip
-              content="The connection string should include Endpoint, SharedAccessKeyName, SharedAccessKey, and EntityPath"
-              relationship="description"
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.5rem' }}>
-                <Info24Regular style={{ fontSize: '14px' }} />
-                Connection string format:
-              </span>
-            </Tooltip>
-            <code>Endpoint=sb://...;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...</code>
-          </div>
+      <div className={styles.callout}>
+        A guided tutorial for real-time health monitoring using Microsoft Fabric and Spark Structured Streaming.
+      </div>
 
-          {/* Status Section */}
-          <div className={styles.statusSection}>
-            <div className={styles.statusRow}>
-              <span
-                className={`${styles.statusDot} ${status === 'connected' ? styles.connected : ''} ${status === 'connecting' ? styles.connecting : ''} ${status === 'error' ? styles.error : ''}`}
-              />
-              <span className={styles.statusLabel}>Status:</span>
-              <Badge appearance="filled" color={getStatusColor(status)}>
-                {getStatusText(status)}
-              </Badge>
-            </div>
-            <div className={styles.statusRow}>
-              <span className={styles.statusLabel}>Messages received:</span>
-              <span className={styles.statusValue}>{messageCount}</span>
-            </div>
-            {error && (
-              <div className={styles.statusRow}>
-                <span className={styles.statusLabel} style={{ color: '#c42b1c' }}>
-                  Error: {error}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Buttons */}
-          <div className={styles.buttonGroup}>
-            <Button
-              appearance={status === 'connected' ? 'secondary' : 'primary'}
-              icon={
-                status === 'connecting' ? (
-                  <Spinner size="tiny" />
-                ) : status === 'connected' ? (
-                  <PlugDisconnected24Regular />
-                ) : (
-                  <PlugConnected24Regular />
-                )
-              }
-              onClick={handleConnect}
-              disabled={status === 'connecting' || (!connectionString && status !== 'connected')}
-              style={{ flex: 1 }}
-            >
-              {status === 'connected' ? 'Disconnect' : status === 'connecting' ? 'Connecting...' : 'Connect'}
-            </Button>
-            <Button
-              appearance="subtle"
-              icon={<Delete24Regular />}
-              onClick={clearMessages}
-              disabled={messages.length === 0}
-            >
-              Clear
-            </Button>
-          </div>
-        </aside>
-
-        {/* Stream Panel */}
-        <section className={styles.streamPanel}>
-          <div className={styles.streamHeader}>
-            <h2 className={styles.streamTitle}>
-              📺 Live Stream
-            </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={autoScroll}
-                  onChange={(e) => setAutoScroll(e.target.checked)}
-                />
-                Auto-scroll
-              </label>
-              <span className={styles.messageCount}>
-                {messages.length} messages
+      {/* Connection Section */}
+      <section className={styles.storySection}>
+        {/* Producer Connection */}
+        <article className={styles.connectionCard}>
+          <h2>Producer Connection</h2>
+          <p className={styles.connectionHint}>
+            Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...
+          </p>
+          <textarea
+            className={styles.connectionInput}
+            placeholder="Paste your Producer Event Hub connection string..."
+            value={producerConnectionString}
+            onChange={(e) => {
+              setProducerConnectionString(e.target.value);
+              setProducerStatus('disconnected');
+            }}
+          />
+          <div className={styles.connectionActions}>
+            <button className={styles.testButton} onClick={testProducerConnection}>
+              Test Connection
+            </button>
+            <div className={styles.statusIndicator}>
+              <span className={`${styles.statusDot} ${styles[producerStatus]}`} />
+              <span className={styles.statusText}>
+                {producerStatus === 'connected' ? 'Connected' : producerStatus === 'error' ? 'Error' : 'Not Connected'}
               </span>
             </div>
           </div>
+        </article>
 
-          <div className={styles.streamContent}>
-            {messages.length === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>📭</div>
-                <div className={styles.emptyText}>
-                  <p>No messages yet</p>
-                  <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                    Connect to an Event Hub to start streaming data
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                {[...messages].reverse().map((msg) => (
-                  <div key={msg.id} className={styles.messageItem}>
-                    <div className={styles.messageMeta}>
-                      <span className={styles.messageTimestamp}>
-                        ⏱️ {formatTimestamp(msg.timestamp)}
-                      </span>
-                      <span className={styles.messagePartition}>
-                        📦 Partition: {msg.partitionId}
-                      </span>
-                      <span className={styles.messageOffset}>
-                        #️⃣ Seq: {msg.sequenceNumber}
-                      </span>
-                    </div>
-                    <pre className={styles.messageBody}>{msg.body}</pre>
+        {/* Consumer Connection */}
+        <article className={`${styles.connectionCard} ${styles.consumerCard}`}>
+          <h2>Consumer Connection</h2>
+          <p className={styles.connectionHint}>
+            Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...
+          </p>
+          <textarea
+            className={styles.connectionInput}
+            placeholder="Paste your Consumer Event Hub connection string..."
+            value={consumerConnectionString}
+            onChange={(e) => {
+              setConsumerConnectionString(e.target.value);
+              setConsumerStatus('disconnected');
+            }}
+          />
+          <div className={styles.connectionActions}>
+            <button className={styles.testButton} onClick={testConsumerConnection}>
+              Test Connection
+            </button>
+            <div className={styles.statusIndicator}>
+              <span className={`${styles.statusDot} ${styles[consumerStatus]}`} />
+              <span className={styles.statusText}>
+                {consumerStatus === 'connected' ? 'Connected' : consumerStatus === 'error' ? 'Error' : 'Not Connected'}
+              </span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      {/* Demo Workflow Section */}
+      <section className={styles.workflow}>
+        <h2>Demo</h2>
+
+        {/* Step 1: Add Producer */}
+        <div className={styles.workflowStep}>
+          <div className={styles.stepNumber}>1</div>
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>Add a Heartbeat Producer</h3>
+            <p className={styles.stepDesc}>
+              This named heartbeat producer will send Events to EventStream.
+            </p>
+            <button 
+              className={`${styles.addButton} ${producerStatus !== 'connected' ? styles.disabled : ''}`}
+              onClick={addProducer}
+              disabled={producerStatus !== 'connected'}
+            >
+              <span className={styles.plusIcon}>+</span> Add Producer
+            </button>
+            {producers.length > 0 && (
+              <div className={styles.producerList}>
+                {producers.map((p) => (
+                  <div key={p.id} className={styles.producerItem}>
+                    <span className={`${styles.statusDot} ${styles.connected}`} />
+                    {p.name}
                   </div>
                 ))}
-                <div ref={streamEndRef} />
-              </>
+              </div>
             )}
           </div>
-        </section>
-      </main>
+        </div>
+
+        {/* GIF Placeholder 1 */}
+        <figure className={styles.demoGif}>
+          <img src="/producer-creation.gif" alt="Producer creation workflow demonstration" />
+        </figure>
+
+        <div className={styles.workflowArrow}>↓</div>
+
+        {/* Step 2: Spark Stream */}
+        <div className={`${styles.workflowStep} ${styles.aiStep}`}>
+          <div className={styles.stepNumber}>2</div>
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>Start Spark Stream in Fabric Notebook</h3>
+            <p className={styles.stepDesc}>
+              Spark will read the Event Stream and mark the device as healthy. If the device disconnects for 5 seconds, 
+              Spark immediately marks it as unhealthy.
+            </p>
+            
+            {/* Python Code Block */}
+            <div className={`${styles.codeBlock} ${!isCodeEnabled ? styles.dimmed : ''}`}>
+              <div className={styles.codeHeader}>
+                <div className={styles.codeDots}>
+                  <span></span><span></span><span></span>
+                </div>
+                <span className={styles.codeLabel}>Python</span>
+                <button 
+                  className={`${styles.copyButton} ${codeCopied ? styles.copied : ''}`}
+                  onClick={copyCode}
+                  disabled={!isCodeEnabled}
+                >
+                  {codeCopied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre className={styles.codeContent}>
+                <code>{getSparkCodeWithConnection()}</code>
+              </pre>
+              {!isCodeEnabled && (
+                <div className={styles.codeOverlay}>
+                  <span>Configure Consumer Connection to enable</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* GIF Placeholder 2 */}
+        <figure className={styles.demoGif}>
+          <img src="/processor-creation.gif" alt="Spark processor setup demonstration" />
+        </figure>
+
+        <div className={styles.workflowArrow}>↓</div>
+
+        {/* Step 3: Add Consumer / Live Stream */}
+        <div className={styles.workflowStep}>
+          <div className={styles.stepNumber}>3</div>
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>Add Consumer</h3>
+            <p className={styles.stepDesc}>
+              Consumer reads from the Spark generated Health State.
+            </p>
+            
+            {/* Live Stream Panel */}
+            <div className={styles.streamPanel}>
+              <div className={styles.streamHeader}>
+                <h4 className={styles.streamTitle}>
+                  <svg className={styles.streamIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.5 4.5a2.5 2.5 0 0 0-5 0v15a2.5 2.5 0 0 0 5 0v-15Z" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M20.5 4.5a2.5 2.5 0 0 0-5 0v15a2.5 2.5 0 0 0 5 0v-15Z" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M3 12h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Live Stream
+                </h4>
+                <div className={styles.streamControls}>
+                  <label className={styles.autoScrollLabel}>
+                    <input
+                      type="checkbox"
+                      checked={autoScroll}
+                      onChange={(e) => setAutoScroll(e.target.checked)}
+                    />
+                    Auto-scroll
+                  </label>
+                  <span className={styles.messageCount}>{messages.length} messages</span>
+                </div>
+              </div>
+
+              <div className={styles.streamActions}>
+                <button
+                  className={`${styles.streamButton} ${streamStatus === 'connected' ? styles.streamConnected : ''}`}
+                  onClick={handleConnectStream}
+                  disabled={streamStatus === 'connecting' || !consumerConnectionString}
+                >
+                  {streamStatus === 'connecting' ? 'Connecting...' : streamStatus === 'connected' ? 'Disconnect' : 'Connect'}
+                </button>
+                <button
+                  className={`${styles.streamButton} ${styles.clearButton}`}
+                  onClick={clearMessages}
+                  disabled={messages.length === 0}
+                >
+                  Clear
+                </button>
+              </div>
+
+              {error && <div className={styles.streamError}>Error: {error}</div>}
+
+              <div className={styles.streamContent}>
+                {messages.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <div className={styles.emptyIcon}>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <p>No messages yet</p>
+                    <p className={styles.emptyHint}>Connect to the Event Hub to start streaming health state data</p>
+                  </div>
+                ) : (
+                  <>
+                    {[...messages].reverse().map((msg) => (
+                      <div key={msg.id} className={styles.messageItem}>
+                        <div className={styles.messageMeta}>
+                          <span className={styles.messageTimestamp}>{formatTimestamp(msg.timestamp)}</span>
+                          <span className={styles.messagePartition}>Partition: {msg.partitionId}</span>
+                          <span className={styles.messageSequence}>Seq: {msg.sequenceNumber}</span>
+                        </div>
+                        <pre className={styles.messageBody}>{msg.body}</pre>
+                      </div>
+                    ))}
+                    <div ref={streamEndRef} />
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* GIF Placeholder 3 */}
+        <figure className={styles.demoGif}>
+          <img src="/consumer-creation.gif" alt="Consumer setup and live stream demonstration" />
+        </figure>
+      </section>
+
+      {/* Open Source Badge */}
+      <section className={styles.openSource}>
+        <a href="https://github.com/microsoft/fabric-samples" className={styles.ossBadge} target="_blank" rel="noopener noreferrer">
+          Microsoft Fabric Samples
+        </a>
+        <p>Built with Microsoft Fabric Real-Time Intelligence</p>
+      </section>
     </div>
   );
 }
