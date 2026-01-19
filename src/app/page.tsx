@@ -15,6 +15,13 @@ interface Producer {
   dots: { id: number; key: number }[];
 }
 
+interface ParsedConnectionDetails {
+  namespace: string;
+  topic: string;
+  keyName: string;
+  key: string;
+}
+
 export default function Home() {
   // Producer connection state (Read and Write)
   const [producerReadConnection, setProducerReadConnection] = useState('');
@@ -27,6 +34,12 @@ export default function Home() {
   const [consumerReadStatus, setConsumerReadStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
   const [consumerWriteConnection, setConsumerWriteConnection] = useState('');
   const [consumerWriteStatus, setConsumerWriteStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+
+  // Parsed connection details
+  const [producerWriteDetails, setProducerWriteDetails] = useState<ParsedConnectionDetails | null>(null);
+  const [producerReadDetails, setProducerReadDetails] = useState<ParsedConnectionDetails | null>(null);
+  const [consumerWriteDetails, setConsumerWriteDetails] = useState<ParsedConnectionDetails | null>(null);
+  const [consumerReadDetails, setConsumerReadDetails] = useState<ParsedConnectionDetails | null>(null);
 
   // Producer list with extended state
   const [producers, setProducers] = useState<Producer[]>([]);
@@ -82,8 +95,41 @@ export default function Home() {
       .replace('{CONSUMER_WRITE_CONNECTION}', consumerWriteConnection);
   };
 
-  const testConnection = async (value: string, isProducerWrite: boolean = false): Promise<'connected' | 'error' | 'disconnected'> => {
+  const parseConnectionString = (connectionString: string): ParsedConnectionDetails | null => {
+    try {
+      // Extract namespace from Endpoint
+      const endpointMatch = connectionString.match(/Endpoint=sb:\/\/([^.]+)\.servicebus\.windows\.net/);
+      const namespace = endpointMatch ? endpointMatch[1] : '';
+
+      // Extract EntityPath (topic)
+      const entityPathMatch = connectionString.match(/EntityPath=([^;]+)/);
+      const topic = entityPathMatch ? entityPathMatch[1] : '';
+
+      // Extract SharedAccessKeyName
+      const keyNameMatch = connectionString.match(/SharedAccessKeyName=([^;]+)/);
+      const keyName = keyNameMatch ? keyNameMatch[1] : '';
+
+      // Extract SharedAccessKey
+      const keyMatch = connectionString.match(/SharedAccessKey=([^;]+)/);
+      const key = keyMatch ? keyMatch[1] : '';
+
+      if (namespace && topic && keyName && key) {
+        return { namespace, topic, keyName, key };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const testConnection = async (
+    value: string, 
+    setDetails: (details: ParsedConnectionDetails | null) => void,
+    isProducerWrite: boolean = false
+  ): Promise<'connected' | 'error' | 'disconnected'> => {
     if (value.includes('Endpoint=sb://') && value.includes('EntityPath=')) {
+      const parsed = parseConnectionString(value);
+      setDetails(parsed);
       // If this is the producer write connection, also connect the producer client
       if (isProducerWrite) {
         try {
@@ -94,8 +140,10 @@ export default function Home() {
       }
       return 'connected';
     } else if (value.length > 0) {
+      setDetails(null);
       return 'error';
     }
+    setDetails(null);
     return 'disconnected';
   };
 
@@ -258,6 +306,9 @@ export default function Home() {
       {/* Demo Workflow Section */}
       <section className={styles.workflow}>
         <h2>Demo</h2>
+        <p className={styles.demoIntro}>
+          Create 2 Fabric Event Streams called <strong>Producer</strong> and <strong>Consumer</strong>. Add a &quot;Custom endpoint&quot; Source and Sink, and grab the Event Hub Connection Strings.
+        </p>
 
         {/* GIF 1 - Before Producer */}
         <figure className={styles.demoGif}>
@@ -268,6 +319,9 @@ export default function Home() {
 
         {/* Connection Section */}
         <section className={styles.storySection}>
+          <p className={styles.connectionIntro}>
+            Enter your EventStream Event Hub Connection-string below. This is a static website with no backend server, all connections will be established without leaving your browser.
+          </p>
           {/* Producer Write Connection */}
           <article className={styles.connectionCard}>
             <div className={styles.connectionNumber}>1</div>
@@ -281,12 +335,13 @@ export default function Home() {
               onChange={(e) => {
                 setProducerWriteConnection(e.target.value);
                 setProducerWriteStatus('disconnected');
+                setProducerWriteDetails(null);
               }}
               onFocus={(e) => e.target.placeholder = ''}
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={async () => setProducerWriteStatus(await testConnection(producerWriteConnection, true))}>
+              <button className={styles.testButton} onClick={async () => setProducerWriteStatus(await testConnection(producerWriteConnection, setProducerWriteDetails, true))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -296,6 +351,14 @@ export default function Home() {
                 </span>
               </div>
             </div>
+            {producerWriteDetails && (
+              <div className={styles.connectionDetails}>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Namespace</span><span className={styles.detailValue}>{producerWriteDetails.namespace}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Topic</span><span className={styles.detailValue}>{producerWriteDetails.topic}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key Name</span><span className={styles.detailValue}>{producerWriteDetails.keyName}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key</span><span className={styles.detailValue}>{producerWriteDetails.key}</span></div>
+              </div>
+            )}
           </article>
 
           {/* Producer Read Connection */}
@@ -311,12 +374,13 @@ export default function Home() {
               onChange={(e) => {
                 setProducerReadConnection(e.target.value);
                 setProducerReadStatus('disconnected');
+                setProducerReadDetails(null);
               }}
               onFocus={(e) => e.target.placeholder = ''}
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={async () => setProducerReadStatus(await testConnection(producerReadConnection))}>
+              <button className={styles.testButton} onClick={async () => setProducerReadStatus(await testConnection(producerReadConnection, setProducerReadDetails))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -326,6 +390,14 @@ export default function Home() {
                 </span>
               </div>
             </div>
+            {producerReadDetails && (
+              <div className={styles.connectionDetails}>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Namespace</span><span className={styles.detailValue}>{producerReadDetails.namespace}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Topic</span><span className={styles.detailValue}>{producerReadDetails.topic}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key Name</span><span className={styles.detailValue}>{producerReadDetails.keyName}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key</span><span className={styles.detailValue}>{producerReadDetails.key}</span></div>
+              </div>
+            )}
           </article>
 
           {/* Consumer Write Connection */}
@@ -341,12 +413,13 @@ export default function Home() {
               onChange={(e) => {
                 setConsumerWriteConnection(e.target.value);
                 setConsumerWriteStatus('disconnected');
+                setConsumerWriteDetails(null);
               }}
               onFocus={(e) => e.target.placeholder = ''}
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={async () => setConsumerWriteStatus(await testConnection(consumerWriteConnection))}>
+              <button className={styles.testButton} onClick={async () => setConsumerWriteStatus(await testConnection(consumerWriteConnection, setConsumerWriteDetails))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -356,6 +429,14 @@ export default function Home() {
                 </span>
               </div>
             </div>
+            {consumerWriteDetails && (
+              <div className={styles.connectionDetails}>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Namespace</span><span className={styles.detailValue}>{consumerWriteDetails.namespace}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Topic</span><span className={styles.detailValue}>{consumerWriteDetails.topic}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key Name</span><span className={styles.detailValue}>{consumerWriteDetails.keyName}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key</span><span className={styles.detailValue}>{consumerWriteDetails.key}</span></div>
+              </div>
+            )}
           </article>
 
           {/* Consumer Read Connection */}
@@ -371,12 +452,13 @@ export default function Home() {
               onChange={(e) => {
                 setConsumerReadConnection(e.target.value);
                 setConsumerReadStatus('disconnected');
+                setConsumerReadDetails(null);
               }}
               onFocus={(e) => e.target.placeholder = ''}
               onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
             />
             <div className={styles.connectionActions}>
-              <button className={styles.testButton} onClick={async () => setConsumerReadStatus(await testConnection(consumerReadConnection))}>
+              <button className={styles.testButton} onClick={async () => setConsumerReadStatus(await testConnection(consumerReadConnection, setConsumerReadDetails))}>
                 Test Connection
               </button>
               <div className={styles.statusIndicator}>
@@ -386,6 +468,14 @@ export default function Home() {
                 </span>
               </div>
             </div>
+            {consumerReadDetails && (
+              <div className={styles.connectionDetails}>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Namespace</span><span className={styles.detailValue}>{consumerReadDetails.namespace}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Topic</span><span className={styles.detailValue}>{consumerReadDetails.topic}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key Name</span><span className={styles.detailValue}>{consumerReadDetails.keyName}</span></div>
+                <div className={styles.detailRow}><span className={styles.detailLabel}>Key</span><span className={styles.detailValue}>{consumerReadDetails.key}</span></div>
+              </div>
+            )}
           </article>
         </section>
 

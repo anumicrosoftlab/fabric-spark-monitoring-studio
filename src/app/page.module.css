@@ -199,6 +199,17 @@
   margin-bottom: 4rem;
 }
 
+.connectionIntro {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+:global([data-theme="light"]) .connectionIntro {
+  color: rgba(0, 0, 0, 0.7);
+}
+
 .connectionCard {
   background: var(--colorNeutralBackground2, rgba(255,255,255,0.02));
   border: 1px solid var(--colorNeutralStroke1, rgba(255,255,255,0.08));
@@ -401,6 +412,57 @@
   color: var(--colorNeutralForeground2, rgba(255,255,255,0.7));
 }
 
+/* Connection Details Display */
+.connectionDetails {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+:global([data-theme="light"]) .connectionDetails {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+}
+
+.detailLabel {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 70px;
+  text-align: left;
+}
+
+:global([data-theme="light"]) .detailLabel {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.detailValue {
+  color: #89e8ad;
+  font-weight: 500;
+  background: rgba(74, 222, 128, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+:global([data-theme="light"]) .detailValue {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
 /* Workflow Section */
 .workflow {
   margin-bottom: 4rem;
@@ -489,6 +551,26 @@
   color: rgba(74, 222, 128, 0.5);
   font-size: 1.5rem;
   padding: 0.5rem 0;
+}
+
+.demoIntro {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+:global([data-theme="light"]) .demoIntro {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.demoIntro strong {
+  color: #89e8ad;
+  font-weight: 600;
+}
+
+:global([data-theme="light"]) .demoIntro strong {
+  color: #16a34a;
 }
 
 .demoGif {
