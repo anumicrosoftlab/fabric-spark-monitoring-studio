@@ -12,9 +12,8 @@ import {
 export type ProducerStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface HeartbeatMessage {
-  ProducerName: string;
-  Timestamp: string;
-  Healthy: boolean;
+  machine_name: string;
+  machine_time: string;
 }
 
 export interface UseEventHubProducerReturn {
@@ -24,7 +23,7 @@ export interface UseEventHubProducerReturn {
   messagesSent: number;
   connect: (connectionString: string) => Promise<void>;
   disconnect: () => void;
-  sendHeartbeat: (producerName: string) => Promise<boolean>;
+  sendHeartbeat: (machineName: string) => Promise<boolean>;
 }
 
 const SAS_TOKEN_TTL_SECONDS = 3600; // 1 hour
@@ -145,16 +144,15 @@ export function useEventHubProducer(): UseEventHubProducerReturn {
     [disconnect]
   );
 
-  const sendHeartbeat = useCallback(async (producerName: string): Promise<boolean> => {
+  const sendHeartbeat = useCallback(async (machineName: string): Promise<boolean> => {
     if (!producerClientRef.current || status !== 'connected') {
       console.warn('[EventHubProducer] Cannot send heartbeat - not connected');
       return false;
     }
 
     const heartbeat: HeartbeatMessage = {
-      ProducerName: producerName,
-      Timestamp: new Date().toISOString(),
-      Healthy: true,
+      machine_name: machineName,
+      machine_time: new Date().toISOString(),
     };
 
     try {
