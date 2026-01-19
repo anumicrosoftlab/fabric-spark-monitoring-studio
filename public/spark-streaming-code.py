@@ -11,16 +11,27 @@ spark.conf.set(
     "com.databricks.sql.streaming.state.RocksDBStateStoreProvider"
 )
 
-# Event Hub connection configuration
-EVENTHUB_CONNECTION_STRING = "{CONSUMER_CONNECTION_STRING}"
+# Event Hub connection configuration - Producer Read (input)
+PRODUCER_READ_CONNECTION = "{PRODUCER_READ_CONNECTION}"
 
-ehConf = {
+# Event Hub connection configuration - Consumer Write (output)  
+CONSUMER_WRITE_CONNECTION = "{CONSUMER_WRITE_CONNECTION}"
+
+# Input Event Hub config (read heartbeats from producer)
+inputEhConf = {
     "eventhubs.connectionString": 
         sc._jvm.org.apache.spark.eventhubs.EventHubsUtils
-          .encrypt(EVENTHUB_CONNECTION_STRING),
+          .encrypt(PRODUCER_READ_CONNECTION),
     "eventhubs.consumerGroup": "$Default",
     "eventhubs.startingPosition": 
         '{"offset": "-1", "enqueuedTime": null}'
+}
+
+# Output Event Hub config (write health state to consumer)
+outputEhConf = {
+    "eventhubs.connectionString": 
+        sc._jvm.org.apache.spark.eventhubs.EventHubsUtils
+          .encrypt(CONSUMER_WRITE_CONNECTION)
 }
 
 # Define schema for heartbeat events
@@ -30,11 +41,11 @@ heartbeat_schema = StructType([
     StructField("status", StringType(), True)
 ])
 
-# Read from Event Hub stream
+# Read from Event Hub stream (Producer Read)
 raw_stream = (
     spark.readStream
     .format("eventhubs")
-    .options(**ehConf)
+    .options(**inputEhConf)
     .load()
 )
 
@@ -63,14 +74,16 @@ device_health = (
     )
 )
 
-# Write health state to delta table
+# Write health state to Event Hub (Consumer Write)
 query = (
     device_health
+    .select(to_json(struct("*")).alias("body"))
     .writeStream
-    .format("delta")
+    .format("eventhubs")
+    .options(**outputEhConf)
     .outputMode("complete")
     .option("checkpointLocation", "/tmp/heartbeat_checkpoint")
-    .table("device_health_state")
+    .start()
 )
 
 query.awaitTermination()

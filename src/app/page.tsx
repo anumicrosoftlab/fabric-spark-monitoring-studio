@@ -6,13 +6,17 @@ import { Highlight, themes } from 'prism-react-renderer';
 import styles from './page.module.css';
 
 export default function Home() {
-  // Producer connection state
-  const [producerConnectionString, setProducerConnectionString] = useState('');
-  const [producerStatus, setProducerStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  // Producer connection state (Read and Write)
+  const [producerReadConnection, setProducerReadConnection] = useState('');
+  const [producerReadStatus, setProducerReadStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  const [producerWriteConnection, setProducerWriteConnection] = useState('');
+  const [producerWriteStatus, setProducerWriteStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
   
-  // Consumer connection state
-  const [consumerConnectionString, setConsumerConnectionString] = useState('');
-  const [consumerStatus, setConsumerStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  // Consumer connection state (Read and Write)
+  const [consumerReadConnection, setConsumerReadConnection] = useState('');
+  const [consumerReadStatus, setConsumerReadStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  const [consumerWriteConnection, setConsumerWriteConnection] = useState('');
+  const [consumerWriteStatus, setConsumerWriteStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
 
   // Producer list
   const [producers, setProducers] = useState<{ id: number; name: string }[]>([]);
@@ -49,32 +53,24 @@ export default function Home() {
     }
   }, [messages, autoScroll]);
 
-  // Get Spark code with consumer connection string injected
+  // Get Spark code with connection strings injected
   const getSparkCodeWithConnection = () => {
-    if (!consumerConnectionString || consumerStatus !== 'connected') {
+    if (!producerReadConnection || producerReadStatus !== 'connected' || 
+        !consumerWriteConnection || consumerWriteStatus !== 'connected') {
       return sparkCode;
     }
-    return sparkCode.replace('{CONSUMER_CONNECTION_STRING}', consumerConnectionString);
+    return sparkCode
+      .replace('{PRODUCER_READ_CONNECTION}', producerReadConnection)
+      .replace('{CONSUMER_WRITE_CONNECTION}', consumerWriteConnection);
   };
 
-  const testProducerConnection = () => {
-    if (producerConnectionString.includes('Endpoint=sb://') && producerConnectionString.includes('EntityPath=')) {
-      setProducerStatus('connected');
-    } else if (producerConnectionString.length > 0) {
-      setProducerStatus('error');
-    } else {
-      setProducerStatus('disconnected');
+  const testConnection = (value: string): 'connected' | 'error' | 'disconnected' => {
+    if (value.includes('Endpoint=sb://') && value.includes('EntityPath=')) {
+      return 'connected';
+    } else if (value.length > 0) {
+      return 'error';
     }
-  };
-
-  const testConsumerConnection = () => {
-    if (consumerConnectionString.includes('Endpoint=sb://') && consumerConnectionString.includes('EntityPath=')) {
-      setConsumerStatus('connected');
-    } else if (consumerConnectionString.length > 0) {
-      setConsumerStatus('error');
-    } else {
-      setConsumerStatus('disconnected');
-    }
+    return 'disconnected';
   };
 
   const addProducer = () => {
@@ -104,8 +100,8 @@ export default function Home() {
   const handleConnectStream = async () => {
     if (streamStatus === 'connected' || streamStatus === 'connecting') {
       disconnect();
-    } else if (consumerConnectionString) {
-      await connect(consumerConnectionString);
+    } else if (consumerReadConnection && consumerReadStatus === 'connected') {
+      await connect(consumerReadConnection);
     }
   };
 
@@ -116,7 +112,8 @@ export default function Home() {
     setTimeout(() => setCodeCopied(false), 2000);
   };
 
-  const isCodeEnabled = consumerStatus === 'connected';
+  // Spark code is enabled when Producer Read and Consumer Write are connected
+  const isCodeEnabled = producerReadStatus === 'connected' && consumerWriteStatus === 'connected';
 
   return (
     <div className={styles.container}>
@@ -138,74 +135,154 @@ export default function Home() {
           </svg>
           heartbeat
         </h1>
-        <p className={styles.tagline}>Stateful Stream Processing Demonstration with <span className={styles.fabricSparkGlow}>Fabric Spark</span>.</p>
+        <p className={styles.tagline}>Stateful Stream Processing demonstration with <span className={styles.fabricSparkGlow}>Fabric Spark</span>.</p>
         <span className={styles.badge}>Uses Fabric RTI EventStreams, Spark Structured Streaming with RocksDB</span>
       </header>
 
       <div className={styles.callout}>
-        A guided tutorial for real-time health monitoring using Microsoft Fabric and Spark Structured Streaming.
+        A guided tutorial for real-time, stateful health monitoring using Microsoft Fabric Spark Structured Streaming.
       </div>
 
-      {/* Connection Section */}
-      <section className={styles.storySection}>
-        {/* Producer Connection */}
-        <article className={styles.connectionCard}>
-          <h2>Producer Connection</h2>
-          <textarea
-            className={styles.connectionInput}
-            placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..."
-            value={producerConnectionString}
-            onChange={(e) => {
-              setProducerConnectionString(e.target.value);
-              setProducerStatus('disconnected');
-            }}
-            onFocus={(e) => e.target.placeholder = ''}
-            onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
-          />
-          <div className={styles.connectionActions}>
-            <button className={styles.testButton} onClick={testProducerConnection}>
-              Test Connection
-            </button>
-            <div className={styles.statusIndicator}>
-              <span className={`${styles.statusDot} ${styles[producerStatus]}`} />
-              <span className={styles.statusText}>
-                {producerStatus === 'connected' ? 'Connected' : producerStatus === 'error' ? 'Error' : 'Not Connected'}
-              </span>
-            </div>
-          </div>
-        </article>
-
-        {/* Consumer Connection */}
-        <article className={`${styles.connectionCard} ${styles.consumerCard}`}>
-          <h2>Consumer Connection</h2>
-          <textarea
-            className={styles.connectionInput}
-            placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..."
-            value={consumerConnectionString}
-            onChange={(e) => {
-              setConsumerConnectionString(e.target.value);
-              setConsumerStatus('disconnected');
-            }}
-            onFocus={(e) => e.target.placeholder = ''}
-            onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
-          />
-          <div className={styles.connectionActions}>
-            <button className={styles.testButton} onClick={testConsumerConnection}>
-              Test Connection
-            </button>
-            <div className={styles.statusIndicator}>
-              <span className={`${styles.statusDot} ${styles[consumerStatus]}`} />
-              <span className={styles.statusText}>
-                {consumerStatus === 'connected' ? 'Connected' : consumerStatus === 'error' ? 'Error' : 'Not Connected'}
-              </span>
-            </div>
-          </div>
-        </article>
-      </section>
+      {/* Architecture Diagram */}
+      <figure className={styles.architectureFigure}>
+        <img src="/architecture.png" alt="Heartbeat architecture diagram" className={styles.architectureImage} />
+      </figure>
 
       {/* Demo Workflow Section */}
       <section className={styles.workflow}>
         <h2>Demo</h2>
+
+        {/* GIF 1 - Before Producer */}
+        <figure className={styles.demoGif}>
+          <img src="/producer-creation.gif" alt="Producer creation workflow demonstration" />
+        </figure>
+
+        <div className={styles.workflowArrow}>↓</div>
+
+        {/* Connection Section */}
+        <section className={styles.storySection}>
+          {/* Producer Write Connection */}
+          <article className={styles.connectionCard}>
+            <div className={styles.connectionNumber}>1</div>
+            <div className={styles.connectionSourceLabel}><span className={styles.browserLabel}>BROWSER</span></div>
+            <h2>Producer Write Connection</h2>
+            <p className={styles.connectionDesc}>Your browser's heartbeat producers being added below will send events here.</p>
+            <textarea
+              className={styles.connectionInput}
+              placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..."
+              value={producerWriteConnection}
+              onChange={(e) => {
+                setProducerWriteConnection(e.target.value);
+                setProducerWriteStatus('disconnected');
+              }}
+              onFocus={(e) => e.target.placeholder = ''}
+              onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
+            />
+            <div className={styles.connectionActions}>
+              <button className={styles.testButton} onClick={() => setProducerWriteStatus(testConnection(producerWriteConnection))}>
+                Test Connection
+              </button>
+              <div className={styles.statusIndicator}>
+                <span className={`${styles.statusDot} ${styles[producerWriteStatus]}`} />
+                <span className={styles.statusText}>
+                  {producerWriteStatus === 'connected' ? 'Connected' : producerWriteStatus === 'error' ? 'Error' : 'Not Connected'}
+                </span>
+              </div>
+            </div>
+          </article>
+
+          {/* Producer Read Connection */}
+          <article className={styles.connectionCard}>
+            <div className={styles.connectionNumber}>2</div>
+            <div className={styles.connectionSourceLabel}><span className={styles.sparkLabel}>FABRIC SPARK</span></div>
+            <h2>Producer Read Connection</h2>
+            <p className={styles.connectionDesc}>Spark will read the heartbeats from the browser producers from here.</p>
+            <textarea
+              className={styles.connectionInput}
+              placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..."
+              value={producerReadConnection}
+              onChange={(e) => {
+                setProducerReadConnection(e.target.value);
+                setProducerReadStatus('disconnected');
+              }}
+              onFocus={(e) => e.target.placeholder = ''}
+              onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
+            />
+            <div className={styles.connectionActions}>
+              <button className={styles.testButton} onClick={() => setProducerReadStatus(testConnection(producerReadConnection))}>
+                Test Connection
+              </button>
+              <div className={styles.statusIndicator}>
+                <span className={`${styles.statusDot} ${styles[producerReadStatus]}`} />
+                <span className={styles.statusText}>
+                  {producerReadStatus === 'connected' ? 'Connected' : producerReadStatus === 'error' ? 'Error' : 'Not Connected'}
+                </span>
+              </div>
+            </div>
+          </article>
+
+          {/* Consumer Write Connection */}
+          <article className={`${styles.connectionCard} ${styles.consumerCard}`}>
+            <div className={styles.connectionNumber}>3</div>
+            <div className={styles.connectionSourceLabel}><span className={styles.sparkLabel}>FABRIC SPARK</span></div>
+            <h2>Consumer Write Connection</h2>
+            <p className={styles.connectionDesc}>Spark writes the computed health state here.</p>
+            <textarea
+              className={styles.connectionInput}
+              placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..."
+              value={consumerWriteConnection}
+              onChange={(e) => {
+                setConsumerWriteConnection(e.target.value);
+                setConsumerWriteStatus('disconnected');
+              }}
+              onFocus={(e) => e.target.placeholder = ''}
+              onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
+            />
+            <div className={styles.connectionActions}>
+              <button className={styles.testButton} onClick={() => setConsumerWriteStatus(testConnection(consumerWriteConnection))}>
+                Test Connection
+              </button>
+              <div className={styles.statusIndicator}>
+                <span className={`${styles.statusDot} ${styles[consumerWriteStatus]}`} />
+                <span className={styles.statusText}>
+                  {consumerWriteStatus === 'connected' ? 'Connected' : consumerWriteStatus === 'error' ? 'Error' : 'Not Connected'}
+                </span>
+              </div>
+            </div>
+          </article>
+
+          {/* Consumer Read Connection */}
+          <article className={`${styles.connectionCard} ${styles.consumerCard}`}>
+            <div className={styles.connectionNumber}>4</div>
+            <div className={styles.connectionSourceLabel}><span className={styles.browserLabel}>BROWSER</span></div>
+            <h2>Consumer Read Connection</h2>
+            <p className={styles.connectionDesc}>Your browser reads the processed health state from here.</p>
+            <textarea
+              className={styles.connectionInput}
+              placeholder="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=..."
+              value={consumerReadConnection}
+              onChange={(e) => {
+                setConsumerReadConnection(e.target.value);
+                setConsumerReadStatus('disconnected');
+              }}
+              onFocus={(e) => e.target.placeholder = ''}
+              onBlur={(e) => e.target.placeholder = 'Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...'}
+            />
+            <div className={styles.connectionActions}>
+              <button className={styles.testButton} onClick={() => setConsumerReadStatus(testConnection(consumerReadConnection))}>
+                Test Connection
+              </button>
+              <div className={styles.statusIndicator}>
+                <span className={`${styles.statusDot} ${styles[consumerReadStatus]}`} />
+                <span className={styles.statusText}>
+                  {consumerReadStatus === 'connected' ? 'Connected' : consumerReadStatus === 'error' ? 'Error' : 'Not Connected'}
+                </span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <div className={styles.workflowArrow}>↓</div>
 
         {/* Step 1: Add Producer */}
         <div className={styles.workflowStep}>
@@ -216,9 +293,9 @@ export default function Home() {
               This named heartbeat producer will send Events to EventStream.
             </p>
             <button 
-              className={`${styles.addButton} ${producerStatus !== 'connected' ? styles.disabled : ''}`}
+              className={`${styles.addButton} ${producerWriteStatus !== 'connected' ? styles.disabled : ''}`}
               onClick={addProducer}
-              disabled={producerStatus !== 'connected'}
+              disabled={producerWriteStatus !== 'connected'}
             >
               <span className={styles.plusIcon}>+</span> Add Producer
             </button>
@@ -242,9 +319,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* GIF Placeholder 1 */}
+        <div className={styles.workflowArrow}>↓</div>
+
+        {/* GIF 2 - Before Spark Code */}
         <figure className={styles.demoGif}>
-          <img src="/producer-creation.gif" alt="Producer creation workflow demonstration" />
+          <img src="/processor-creation.gif" alt="Spark processor setup demonstration" />
         </figure>
 
         <div className={styles.workflowArrow}>↓</div>
@@ -300,9 +379,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* GIF Placeholder 2 */}
+        <div className={styles.workflowArrow}>↓</div>
+
+        {/* GIF 3 - After Spark Code */}
         <figure className={styles.demoGif}>
-          <img src="/processor-creation.gif" alt="Spark processor setup demonstration" />
+          <img src="/spark-streaming.gif" alt="Spark streaming demonstration" />
         </figure>
 
         <div className={styles.workflowArrow}>↓</div>
@@ -344,7 +425,7 @@ export default function Home() {
                 <button
                   className={`${styles.streamButton} ${streamStatus === 'connected' ? styles.streamConnected : ''}`}
                   onClick={handleConnectStream}
-                  disabled={streamStatus === 'connecting' || !consumerConnectionString}
+                  disabled={streamStatus === 'connecting' || consumerReadStatus !== 'connected'}
                 >
                   {streamStatus === 'connecting' ? 'Connecting...' : streamStatus === 'connected' ? 'Disconnect' : 'Connect'}
                 </button>
