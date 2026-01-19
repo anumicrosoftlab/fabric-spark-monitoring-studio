@@ -364,8 +364,11 @@ export default function Home() {
 
       {/* Open Source Badge */}
       <section className={styles.openSource}>
-        <div 
+        <a 
+          href="https://jumpstart.fabric.microsoft.com" 
           className={styles.fancyTextContainer}
+          target="_blank" 
+          rel="noopener noreferrer"
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -374,16 +377,7 @@ export default function Home() {
             e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
           }}
         >
-          <p className={styles.fancyText}>Built with Microsoft Fabric Real-Time Intelligence</p>
-        </div>
-        <a href="https://jumpstart.fabric.microsoft.com" className={styles.ossBadge} target="_blank" rel="noopener noreferrer">
-          <img 
-            src="https://jumpstart.fabric.microsoft.com/img/logo.svg" 
-            alt="Fabric Jumpstart" 
-            style={{ height: '20px', marginRight: '8px' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-          Fabric Jumpstart
+          <span className={styles.fancyText}>View more RTI demos at Fabric Jumpstart</span>
         </a>
       </section>
     </div>

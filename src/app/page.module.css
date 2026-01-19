@@ -641,9 +641,17 @@
   background: rgba(137, 232, 173, 0.03);
   border: 1px solid rgba(137, 232, 173, 0.1);
   overflow: hidden;
-  cursor: default;
+  cursor: pointer;
+  text-decoration: none;
   --mouse-x: 50%;
   --mouse-y: 50%;
+  transition: border-color 0.3s ease, transform 0.2s ease;
+}
+
+.fancyTextContainer:hover {
+  border-color: rgba(137, 232, 173, 0.3);
+  transform: translateY(-2px);
+  text-decoration: none;
 }
 
 .fancyTextContainer::before {
