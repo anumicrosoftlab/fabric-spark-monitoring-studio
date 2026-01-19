@@ -77,6 +77,7 @@ export default function Home() {
 
   const streamEndRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [streamPanelExpanded, setStreamPanelExpanded] = useState(false);
 
   // Load Spark code from file
   useEffect(() => {
@@ -649,13 +650,6 @@ export default function Home() {
 
         <div className={styles.workflowArrow}>↓</div>
 
-        {/* GIF 2 - Before Spark Code */}
-        <figure className={styles.demoGif}>
-          <img src="/processor-creation.gif" alt="Spark processor setup demonstration" />
-        </figure>
-
-        <div className={styles.workflowArrow}>↓</div>
-
         {/* Step 2: Spark Stream */}
         <div className={`${styles.workflowStep} ${styles.aiStep}`}>
           <div className={styles.stepNumber}>2</div>
@@ -716,13 +710,13 @@ export default function Home() {
 
         <div className={styles.workflowArrow}>↓</div>
 
-        {/* Step 3: Add Consumer / Live Stream */}
+        {/* Step 3: Health Report */}
         <div className={styles.workflowStep}>
           <div className={styles.stepNumber}>3</div>
           <div className={styles.stepContent}>
-            <h3 className={styles.stepTitle}>Add Consumer</h3>
+            <h3 className={styles.stepTitle}>Health Report</h3>
             <p className={styles.stepDesc}>
-              Consumer reads from the Spark generated Health State Topic. Spark generates an event in real-time (&lt;1s latency) when state changes.
+              Real-time health monitoring powered by Spark. Events only appear when state changes.
             </p>
             
             {/* Producer Health Status Display */}
@@ -730,20 +724,10 @@ export default function Home() {
               <div className={styles.healthStatusPanel}>
                 <div className={styles.healthStatusHeader}>
                   <h4 className={styles.healthStatusTitle}>Producer Health Status</h4>
-                  <button
-                    className={`${styles.connectButton} ${streamStatus === 'connected' ? styles.connected : ''}`}
-                    onClick={handleConnectStream}
-                    disabled={streamStatus === 'connecting' || consumerReadStatus !== 'connected'}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      {streamStatus === 'connected' ? (
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                      ) : (
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      )}
-                    </svg>
-                    {streamStatus === 'connecting' ? 'CONNECTING...' : streamStatus === 'connected' ? 'DISCONNECT' : 'CONNECT'}
-                  </button>
+                  <span className={`${styles.connectionStatus} ${streamStatus === 'connected' ? styles.connected : ''}`}>
+                    <span className={styles.connectionDot}></span>
+                    {streamStatus === 'connecting' ? 'CONNECTING...' : streamStatus === 'connected' ? 'CONNECTED' : 'DISCONNECTED'}
+                  </span>
                 </div>
                 <div className={styles.healthStatusGrid}>
                   {producers.map((p) => (
@@ -788,41 +772,35 @@ export default function Home() {
             
             {/* Live Stream Panel */}
             <div className={styles.streamPanel}>
-              <div className={styles.streamHeader}>
+              <div className={styles.streamHeader} onClick={() => setStreamPanelExpanded(!streamPanelExpanded)} style={{ cursor: 'pointer' }}>
                 <h4 className={styles.streamTitle}>
                   <svg className={styles.streamIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8.5 4.5a2.5 2.5 0 0 0-5 0v15a2.5 2.5 0 0 0 5 0v-15Z" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M20.5 4.5a2.5 2.5 0 0 0-5 0v15a2.5 2.5 0 0 0 5 0v-15Z" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M3 12h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                  Raw Events
+                  State Change Events
                 </h4>
                 <div className={styles.streamControls}>
-                  <label className={styles.autoScrollLabel}>
-                    <input
-                      type="checkbox"
-                      checked={autoScroll}
-                      onChange={(e) => setAutoScroll(e.target.checked)}
-                    />
-                    Auto-scroll
-                  </label>
-                  <span className={styles.messageCount}>{messages.length} messages</span>
-                  <button
-                    className={`${styles.streamButton} ${styles.clearButton}`}
-                    onClick={clearMessages}
-                    disabled={messages.length === 0}
+                  <span className={styles.messageCount}>{messages.length} events</span>
+                  <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                    style={{ transform: streamPanelExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
                   >
-                    Clear
-                  </button>
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
                 </div>
               </div>
 
               {error && <div className={styles.streamError}>Error: {error}</div>}
 
-
-              {error && <div className={styles.streamError}>Error: {error}</div>}
-
-              <div className={styles.streamContent}>
+              {streamPanelExpanded && (
+                <div className={styles.streamContent}>
                 {messages.length === 0 ? (
                   <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}>
@@ -864,7 +842,8 @@ export default function Home() {
                     <div ref={streamEndRef} />
                   </>
                 )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
