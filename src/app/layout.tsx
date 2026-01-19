@@ -11,6 +11,17 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
   },
+  openGraph: {
+    title: 'Heartbeat - Fabric Spark Processing',
+    description: 'Real-time streaming data viewer for Fabric Real Time Intelligence.',
+    images: ['/og-image.svg'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Heartbeat - Fabric Spark Processing',
+    description: 'Real-time streaming data viewer for Fabric Real Time Intelligence.',
+    images: ['/og-image.svg'],
+  },
 };
 
 export default function RootLayout({
