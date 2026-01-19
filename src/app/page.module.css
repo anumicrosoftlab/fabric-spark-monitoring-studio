@@ -1400,4 +1400,276 @@
     align-items: flex-start;
     gap: 0.75rem;
   }
+
+  .healthStatusGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Health Status Panel */
+.healthStatusPanel {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: rgba(10, 35, 25, 0.95);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.healthStatusHeader {
+  padding: 0.875rem 1.25rem;
+  background: rgba(15, 45, 30, 0.8);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.healthStatusTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  margin: 0;
+}
+
+:global([data-theme="light"]) .healthStatusTitle {
+  color: rgba(0,0,0,0.9);
+}
+
+/* Connect Button */
+.connectButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #89e8ad;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.connectButton:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.25);
+  border-color: rgba(74, 222, 128, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
+}
+
+.connectButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.connectButton.connected {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.connectButton.connected:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.healthStatusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.healthStatusCard {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.healthStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Health Badge with colored rectangles */
+.healthBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.healthDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.healthText {
+  min-width: 80px;
+}
+
+/* Grey - Unknown */
+.healthGrey {
+  background: rgba(107, 114, 128, 0.2);
+  border: 1px solid rgba(107, 114, 128, 0.4);
+  color: #9ca3af;
+}
+
+.healthGrey .healthDot {
+  background: #6b7280;
+  box-shadow: 0 0 6px rgba(107, 114, 128, 0.5);
+}
+
+/* Blue - Initializing */
+.healthBlue {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.healthBlue .healthDot {
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+  animation: pulse 1.5s infinite;
+}
+
+/* Green - Healthy */
+.healthGreen {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.healthGreen .healthDot {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0%, 100% { 
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  }
+  50% { 
+    opacity: 0.7;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+  }
+}
+
+/* Red - Unhealthy */
+.healthRed {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.healthRed .healthDot {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  animation: pulseRed 0.8s infinite;
+}
+
+@keyframes pulseRed {
+  0%, 100% { 
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  }
+  50% { 
+    opacity: 0.6;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.9);
+  }
+}
+
+.healthProducerName {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  flex: 1;
+}
+
+:global([data-theme="light"]) .healthProducerName {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.healthExpandBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.healthExpandBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:global([data-theme="light"]) .healthExpandBtn {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme="light"]) .healthExpandBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.healthDetails {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  animation: expandIn 0.2s ease-out;
+}
+
+.healthTimestamp {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+:global([data-theme="light"]) .healthTimestamp {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme="light"]) .healthStatusPanel {
+  background: rgba(10, 35, 25, 0.98);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+:global([data-theme="light"]) .healthStatusHeader {
+  background: rgba(15, 45, 30, 0.95);
+  border-bottom-color: rgba(74, 222, 128, 0.15);
+}
+
+:global([data-theme="light"]) .healthStatusCard {
+  background: rgba(0, 0, 0, 0.2);
 }

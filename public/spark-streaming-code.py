@@ -15,6 +15,7 @@ PRODUCER_READ_CONNECTION = "{PRODUCER_READ_CONNECTION}"
 CONSUMER_WRITE_CONNECTION = "{CONSUMER_WRITE_CONNECTION}"
 PRODUCER_EH_NAME = PRODUCER_READ_CONNECTION.split("EntityPath=")[1].split(";")[0]
 HEARTBEAT_GRACE_PERIOD_MS = 5000
+CHECKPOINT_LOCATION = "Files/checkpoints/heartbeat_state_stream"
 
 class HeartbeatStatus:
     HEALTHY = "Healthy"
@@ -112,6 +113,9 @@ machine_status_stream = (
     )
 )
 
+if notebookutils.fs.exists(CHECKPOINT_LOCATION):
+    notebookutils.fs.rm(CHECKPOINT_LOCATION, recurse=True)
+
 query = (
     machine_status_stream
     .filter(col("machine_name").isNotNull())
@@ -120,7 +124,7 @@ query = (
     .format("eventhubs")
     .options(**outputEhConf)
     .outputMode("update")
-    .option("checkpointLocation", "Files/checkpoints/heartbeat")
+    .option("checkpointLocation", CHECKPOINT_LOCATION)
     .trigger(processingTime="0 seconds")
     .queryName("heartbeat_state_stream")
     .start()

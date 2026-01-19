@@ -6,6 +6,14 @@ import { useEventHubProducer, HeartbeatMessage } from '@/lib/useEventHubProducer
 import { Highlight, themes } from 'prism-react-renderer';
 import styles from './page.module.css';
 
+type HealthStatus = 'Unknown' | 'Initializing' | 'Healthy' | 'Unhealthy';
+
+interface ProducerHealth {
+  status: HealthStatus;
+  lastStatusChangeTime: string | null;
+  isExpanded: boolean;
+}
+
 interface Producer {
   id: number;
   name: string;
@@ -13,6 +21,7 @@ interface Producer {
   isExpanded: boolean;
   lastSentMessage: HeartbeatMessage | null;
   dots: { id: number; key: number }[];
+  health: ProducerHealth;
 }
 
 interface ParsedConnectionDetails {
@@ -84,6 +93,40 @@ export default function Home() {
     }
   }, [messages, autoScroll]);
 
+  // Parse incoming messages to update producer health states
+  useEffect(() => {
+    if (messages.length === 0) return;
+    
+    // Get the latest message
+    const latestMessage = messages[0];
+    try {
+      const body = typeof latestMessage.body === 'string' 
+        ? JSON.parse(latestMessage.body) 
+        : latestMessage.body;
+      
+      if (body && body.machine_name && body.status) {
+        const machineName = body.machine_name as string;
+        const status = body.status as HealthStatus;
+        const lastStatusChangeTime = body.last_status_change_time as string || null;
+        
+        setProducers(prev => prev.map(p => 
+          p.name === machineName 
+            ? { 
+                ...p, 
+                health: {
+                  ...p.health,
+                  status,
+                  lastStatusChangeTime,
+                }
+              } 
+            : p
+        ));
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, [messages]);
+
   // Get Spark code with connection strings injected
   const getSparkCodeWithConnection = () => {
     if (!producerReadConnection || producerReadStatus !== 'connected' || 
@@ -149,7 +192,7 @@ export default function Home() {
 
   const MAX_PRODUCERS = 5;
 
-  const addProducer = () => {
+  const addProducer = async () => {
     if (producers.length >= MAX_PRODUCERS) return;
     // Find the next available ID (lowest unused integer starting from 1)
     const usedIds = new Set(producers.map(p => p.id));
@@ -157,6 +200,9 @@ export default function Home() {
     while (usedIds.has(nextId)) {
       nextId++;
     }
+    
+    const isFirstProducer = producers.length === 0;
+    
     setProducers([...producers, { 
       id: nextId, 
       name: `Producer ${nextId}`,
@@ -164,7 +210,17 @@ export default function Home() {
       isExpanded: false,
       lastSentMessage: null,
       dots: [],
+      health: {
+        status: 'Unknown',
+        lastStatusChangeTime: null,
+        isExpanded: false,
+      },
     }]);
+    
+    // Auto-connect consumer when first producer is added
+    if (isFirstProducer && consumerReadConnection && consumerReadStatus === 'connected' && streamStatus !== 'connected' && streamStatus !== 'connecting') {
+      await connect(consumerReadConnection);
+    }
   };
 
   const toggleProducerPause = (id: number) => {
@@ -177,6 +233,21 @@ export default function Home() {
     setProducers(producers.map(p => 
       p.id === id ? { ...p, isExpanded: !p.isExpanded } : p
     ));
+  };
+
+  const toggleHealthExpand = (id: number) => {
+    setProducers(producers.map(p => 
+      p.id === id ? { ...p, health: { ...p.health, isExpanded: !p.health.isExpanded } } : p
+    ));
+  };
+
+  const getHealthColorClass = (status: HealthStatus) => {
+    switch (status) {
+      case 'Healthy': return styles.healthGreen;
+      case 'Unhealthy': return styles.healthRed;
+      case 'Initializing': return styles.healthBlue;
+      default: return styles.healthGrey;
+    }
   };
 
   // Send heartbeats every second for non-paused producers
@@ -196,9 +267,8 @@ export default function Home() {
                     ...p, 
                     dots: [...p.dots, { id: producer.id, key: newDotKey }],
                     lastSentMessage: {
-                      ProducerName: producer.name,
-                      Timestamp: new Date().toISOString(),
-                      Healthy: true,
+                      machine_name: producer.name,
+                      machine_time: new Date().toISOString(),
                     }
                   } 
                 : p
@@ -652,8 +722,69 @@ export default function Home() {
           <div className={styles.stepContent}>
             <h3 className={styles.stepTitle}>Add Consumer</h3>
             <p className={styles.stepDesc}>
-              Consumer reads from the Spark generated Health State.
+              Consumer reads from the Spark generated Health State Topic. Spark generates an event in real-time (&lt;1s latency) when state changes.
             </p>
+            
+            {/* Producer Health Status Display */}
+            {producers.length > 0 && (
+              <div className={styles.healthStatusPanel}>
+                <div className={styles.healthStatusHeader}>
+                  <h4 className={styles.healthStatusTitle}>Producer Health Status</h4>
+                  <button
+                    className={`${styles.connectButton} ${streamStatus === 'connected' ? styles.connected : ''}`}
+                    onClick={handleConnectStream}
+                    disabled={streamStatus === 'connecting' || consumerReadStatus !== 'connected'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      {streamStatus === 'connected' ? (
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      ) : (
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                      )}
+                    </svg>
+                    {streamStatus === 'connecting' ? 'CONNECTING...' : streamStatus === 'connected' ? 'DISCONNECT' : 'CONNECT'}
+                  </button>
+                </div>
+                <div className={styles.healthStatusGrid}>
+                  {producers.map((p) => (
+                    <div key={p.id} className={styles.healthStatusCard}>
+                      <div className={styles.healthStatusRow}>
+                        <span className={`${styles.healthBadge} ${getHealthColorClass(p.health.status)}`}>
+                          <span className={styles.healthDot}></span>
+                          <span className={styles.healthText}>{p.health.status.toUpperCase()}</span>
+                        </span>
+                        <span className={styles.healthProducerName}>{p.name}</span>
+                        <button 
+                          className={styles.healthExpandBtn}
+                          onClick={() => toggleHealthExpand(p.id)}
+                          aria-label={p.health.isExpanded ? 'Collapse details' : 'Expand details'}
+                          title={p.health.isExpanded ? 'Hide details' : 'Show details'}
+                        >
+                          <svg 
+                            width="14" 
+                            height="14" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2"
+                            style={{ transform: p.health.isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                          >
+                            <path d="M6 9l6 6 6-6"/>
+                          </svg>
+                        </button>
+                      </div>
+                      {p.health.isExpanded && p.health.lastStatusChangeTime && (
+                        <div className={styles.healthDetails}>
+                          <span className={styles.healthTimestamp}>
+                            Last change: {new Date(p.health.lastStatusChangeTime).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* Live Stream Panel */}
             <div className={styles.streamPanel}>
@@ -664,7 +795,7 @@ export default function Home() {
                     <path d="M20.5 4.5a2.5 2.5 0 0 0-5 0v15a2.5 2.5 0 0 0 5 0v-15Z" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M3 12h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                  Live Stream
+                  Raw Events
                 </h4>
                 <div className={styles.streamControls}>
                   <label className={styles.autoScrollLabel}>
@@ -676,25 +807,18 @@ export default function Home() {
                     Auto-scroll
                   </label>
                   <span className={styles.messageCount}>{messages.length} messages</span>
+                  <button
+                    className={`${styles.streamButton} ${styles.clearButton}`}
+                    onClick={clearMessages}
+                    disabled={messages.length === 0}
+                  >
+                    Clear
+                  </button>
                 </div>
               </div>
 
-              <div className={styles.streamActions}>
-                <button
-                  className={`${styles.streamButton} ${streamStatus === 'connected' ? styles.streamConnected : ''}`}
-                  onClick={handleConnectStream}
-                  disabled={streamStatus === 'connecting' || consumerReadStatus !== 'connected'}
-                >
-                  {streamStatus === 'connecting' ? 'Connecting...' : streamStatus === 'connected' ? 'Disconnect' : 'Connect'}
-                </button>
-                <button
-                  className={`${styles.streamButton} ${styles.clearButton}`}
-                  onClick={clearMessages}
-                  disabled={messages.length === 0}
-                >
-                  Clear
-                </button>
-              </div>
+              {error && <div className={styles.streamError}>Error: {error}</div>}
+
 
               {error && <div className={styles.streamError}>Error: {error}</div>}
 
@@ -707,7 +831,7 @@ export default function Home() {
                       </svg>
                     </div>
                     <p>No messages yet</p>
-                    <p className={styles.emptyHint}>Connect to the Event Hub to start streaming health state data</p>
+                    <p className={styles.emptyHint}>Click Connect to start streaming health state data from Spark</p>
                   </div>
                 ) : (
                   <>
