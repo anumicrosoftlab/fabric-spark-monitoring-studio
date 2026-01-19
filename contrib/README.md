@@ -31,3 +31,30 @@
    GIT_ROOT=$(git rev-parse --show-toplevel)
    chmod +x ${GIT_ROOT}/contrib/bootstrap-dev-env.sh && ${GIT_ROOT}/contrib/bootstrap-dev-env.sh
    ```
+
+1. Quick serve:
+
+   ```bash
+   npm run dev -- -p 3847
+   ```
+
+1. Build and serve the website in Production mode:
+
+   ```bash
+   export GIT_ROOT=$(git rev-parse --show-toplevel)
+   rm -rf "${GIT_ROOT}/out"
+
+   npm run build
+   npm run serve
+   ```
+
+1. Deploy to Azure:
+
+   ```bash
+   export CONN_STRING="DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
+   
+   az storage blob delete-batch -s '$web' --connection-string "$CONN_STRING"
+   az storage blob upload-batch -d '$web' -s "${GIT_ROOT}/out" --connection-string "$CONN_STRING"
+   ```
+
+   [Browse](https://heartbeatspark.z9.web.core.windows.net/).
