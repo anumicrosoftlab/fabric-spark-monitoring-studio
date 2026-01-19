@@ -1,47 +1,55 @@
-# Spark Structured Streaming with RocksDB State Store
-# This notebook reads heartbeat events and tracks device health
-
+import json
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-# Configure Spark with RocksDB state store
-spark.conf.set(
-    "spark.sql.streaming.stateStore.providerClass",
-    "com.databricks.sql.streaming.state.RocksDBStateStoreProvider"
-)
+spark.conf.set("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider")
+spark.conf.set("spark.sql.shuffle.partitions", "1")
 
-# Event Hub connection configuration - Producer Read (input)
 PRODUCER_READ_CONNECTION = "{PRODUCER_READ_CONNECTION}"
-
-# Event Hub connection configuration - Consumer Write (output)  
 CONSUMER_WRITE_CONNECTION = "{CONSUMER_WRITE_CONNECTION}"
 
-# Input Event Hub config (read heartbeats from producer)
+PRODUCER_EH_NAME = PRODUCER_READ_CONNECTION.split("EntityPath=")[1].split(";")[0]
+
+def create_starting_positions(eh_name, num_partitions=1):
+    """
+    Create a JSON string for starting positions for each partition in the Event Hub.
+    
+    :param eh_name: Name of the Event Hub
+    :param num_partitions: Number of partitions in the Event Hub
+    :return: JSON string representing starting positions
+    """
+    position_map = {}
+    for partition_id in range(num_partitions):
+        position_key = {
+            "ehName": eh_name,
+            "partitionId": partition_id
+        }
+        event_position = {
+            "offset": "@latest",
+            "seqNo": -1,
+            "enqueuedTime": None,
+            "isInclusive": True
+        }
+        position_map[json.dumps(position_key)] = event_position
+    return json.dumps(position_map)
+
 inputEhConf = {
-    "eventhubs.connectionString": 
-        sc._jvm.org.apache.spark.eventhubs.EventHubsUtils
-          .encrypt(PRODUCER_READ_CONNECTION),
+    "eventhubs.connectionString": sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(PRODUCER_READ_CONNECTION),
     "eventhubs.consumerGroup": "$Default",
-    "eventhubs.startingPosition": 
-        '{"offset": "-1", "enqueuedTime": null}'
+    "eventhubs.startingPositions": create_starting_positions(PRODUCER_EH_NAME, num_partitions=1)
 }
 
-# Output Event Hub config (write health state to consumer)
 outputEhConf = {
-    "eventhubs.connectionString": 
-        sc._jvm.org.apache.spark.eventhubs.EventHubsUtils
-          .encrypt(CONSUMER_WRITE_CONNECTION)
+    "eventhubs.connectionString": sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(CONSUMER_WRITE_CONNECTION)
 }
 
-# Define schema for heartbeat events
 heartbeat_schema = StructType([
     StructField("deviceId", StringType(), True),
     StructField("timestamp", TimestampType(), True),
     StructField("status", StringType(), True)
 ])
 
-# Read from Event Hub stream (Producer Read)
 raw_stream = (
     spark.readStream
     .format("eventhubs")
@@ -49,7 +57,6 @@ raw_stream = (
     .load()
 )
 
-# Parse heartbeat events
 heartbeats = (
     raw_stream
     .select(from_json(col("body").cast("string"), heartbeat_schema).alias("data"))
@@ -57,7 +64,6 @@ heartbeats = (
     .withWatermark("timestamp", "10 seconds")
 )
 
-# Track device health state with 5-second timeout
 device_health = (
     heartbeats
     .groupBy("deviceId")
@@ -74,7 +80,6 @@ device_health = (
     )
 )
 
-# Write health state to Event Hub (Consumer Write)
 query = (
     device_health
     .select(to_json(struct("*")).alias("body"))
@@ -82,7 +87,7 @@ query = (
     .format("eventhubs")
     .options(**outputEhConf)
     .outputMode("complete")
-    .option("checkpointLocation", "/tmp/heartbeat_checkpoint")
+    .option("checkpointLocation", "Files/checkpoints/heartbeat")
     .start()
 )
 
