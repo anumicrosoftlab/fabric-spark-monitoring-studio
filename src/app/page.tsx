@@ -227,6 +227,22 @@ export default function Home() {
         <span className={styles.badge}>Uses Fabric RTI EventStreams, Spark Structured Streaming with RocksDB</span>
       </header>
 
+      {/* YouTube Video */}
+      <section className={styles.workflow}>
+        <div className={styles.videoContainer}>
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/qz3d00dfWvQ?si=kjd-ENzVy3qXk79g"
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+      </section>
+
       <div className={styles.callout}>
         A guided tutorial for real-time, stateful health monitoring using Microsoft Fabric Spark Structured Streaming.
       </div>

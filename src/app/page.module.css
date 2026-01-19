@@ -94,6 +94,89 @@
   color: rgba(0, 0, 0, 0.7);
 }
 
+/* Video Container */
+.videoContainer {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 2rem 0;
+  position: relative;
+}
+
+.videoContainer iframe {
+  border-radius: 12px;
+  border: 2px solid transparent;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
+  background: #0a0a0a;
+}
+
+/* Animated neon glow wrapper */
+.videoContainer::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 566px;
+  height: 321px;
+  max-width: calc(100% + 6px);
+  border-radius: 14px;
+  background: linear-gradient(
+    90deg,
+    #22c55e,
+    #4ade80,
+    #86efac,
+    #4ade80,
+    #22c55e
+  );
+  background-size: 200% 100%;
+  animation: neonFlow 3s ease-in-out infinite;
+  filter: blur(8px);
+  opacity: 0.7;
+  z-index: 0;
+}
+
+.videoContainer::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 564px;
+  height: 319px;
+  max-width: calc(100% + 4px);
+  border-radius: 13px;
+  background: linear-gradient(
+    270deg,
+    #22c55e,
+    #4ade80,
+    #86efac,
+    #4ade80,
+    #22c55e
+  );
+  background-size: 200% 100%;
+  animation: neonFlow 3s ease-in-out infinite reverse;
+  filter: blur(4px);
+  opacity: 0.5;
+  z-index: 0;
+}
+
+@keyframes neonFlow {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.5;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.5;
+  }
+}
+
 /* Architecture Diagram */
 .architectureFigure {
   margin: 0 0 3rem 0;
