@@ -1,9 +1,12 @@
 .container {
-  min-height: 100vh;
+  min-height: calc(100vh - 120px);
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .header {
@@ -12,43 +15,40 @@
 }
 
 .title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #0078d4 0%, #00bcf2 50%, #50e6ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--colorBrandForeground1, #0078d4);
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  color: #a1a1aa;
+  color: var(--colorNeutralForeground3, #707070);
   font-size: 1rem;
 }
 
 .mainContent {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 380px 1fr;
   gap: 1.5rem;
   flex: 1;
   min-height: 0;
 }
 
 .connectionPanel {
-  background: rgba(26, 26, 46, 0.8);
-  border: 1px solid rgba(74, 74, 106, 0.5);
-  border-radius: 12px;
+  background: var(--colorNeutralBackground1, #ffffff);
+  border: 1px solid var(--colorNeutralStroke1, #d1d1d1);
+  border-radius: 8px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow4, 0 2px 4px rgba(0,0,0,0.04), 0 0 2px rgba(0,0,0,0.06));
 }
 
 .sectionTitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #e4e4e7;
+  color: var(--colorNeutralForeground1, #242424);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -61,39 +61,40 @@
 }
 
 .label {
-  font-size: 0.85rem;
-  color: #a1a1aa;
+  font-size: 0.875rem;
+  color: var(--colorNeutralForeground2, #424242);
   font-weight: 500;
 }
 
 .connectionInput {
   width: 100%;
-  min-height: 120px;
+  min-height: 100px;
   padding: 0.75rem;
-  background: rgba(15, 15, 35, 0.8);
-  border: 1px solid rgba(74, 74, 106, 0.5);
-  border-radius: 8px;
-  color: #e4e4e7;
-  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  background: var(--colorNeutralBackground1, #ffffff);
+  border: 1px solid var(--colorNeutralStroke1, #d1d1d1);
+  border-radius: 4px;
+  color: var(--colorNeutralForeground1, #242424);
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
   font-size: 0.8rem;
   resize: vertical;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .connectionInput:focus {
   outline: none;
-  border-color: #0078d4;
+  border-color: var(--colorBrandStroke1, #0078d4);
+  box-shadow: 0 0 0 1px var(--colorBrandStroke1, #0078d4);
 }
 
 .connectionInput::placeholder {
-  color: #6b6b8a;
+  color: var(--colorNeutralForeground4, #707070);
 }
 
 .statusSection {
   padding: 1rem;
-  background: rgba(15, 15, 35, 0.6);
-  border-radius: 8px;
-  border: 1px solid rgba(74, 74, 106, 0.3);
+  background: var(--colorNeutralBackground2, #fafafa);
+  border-radius: 6px;
+  border: 1px solid var(--colorNeutralStroke2, #e0e0e0);
 }
 
 .statusRow {
@@ -111,22 +112,22 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #6b6b8a;
+  background: var(--colorNeutralForeground4, #707070);
 }
 
 .statusDot.connected {
-  background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  background: #0e7a0d;
+  box-shadow: 0 0 6px rgba(14, 122, 13, 0.4);
   animation: pulse 2s infinite;
 }
 
 .statusDot.connecting {
-  background: #f59e0b;
+  background: #c4710b;
   animation: pulse 1s infinite;
 }
 
 .statusDot.error {
-  background: #ef4444;
+  background: #c42b1c;
 }
 
 @keyframes pulse {
@@ -140,46 +141,47 @@
 
 .statusLabel {
   font-size: 0.8rem;
-  color: #a1a1aa;
+  color: var(--colorNeutralForeground3, #707070);
 }
 
 .statusValue {
   font-size: 0.8rem;
-  color: #e4e4e7;
+  color: var(--colorNeutralForeground1, #242424);
   font-weight: 500;
 }
 
 .streamPanel {
-  background: rgba(15, 15, 35, 0.9);
-  border: 1px solid rgba(74, 74, 106, 0.5);
-  border-radius: 12px;
+  background: var(--colorNeutralBackground1, #ffffff);
+  border: 1px solid var(--colorNeutralStroke1, #d1d1d1);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: var(--shadow4, 0 2px 4px rgba(0,0,0,0.04), 0 0 2px rgba(0,0,0,0.06));
 }
 
 .streamHeader {
-  padding: 1rem 1.5rem;
-  background: rgba(26, 26, 46, 0.8);
-  border-bottom: 1px solid rgba(74, 74, 106, 0.3);
+  padding: 0.875rem 1.25rem;
+  background: var(--colorNeutralBackground2, #fafafa);
+  border-bottom: 1px solid var(--colorNeutralStroke2, #e0e0e0);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .streamTitle {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #e4e4e7;
+  color: var(--colorNeutralForeground1, #242424);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .messageCount {
-  font-size: 0.8rem;
-  color: #a1a1aa;
-  background: rgba(74, 74, 106, 0.3);
+  font-size: 0.75rem;
+  color: var(--colorNeutralForeground3, #707070);
+  background: var(--colorNeutralBackground3, #f0f0f0);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
 }
@@ -188,11 +190,12 @@
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  font-size: 0.85rem;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.8rem;
   line-height: 1.6;
   min-height: 400px;
-  max-height: calc(100vh - 300px);
+  max-height: calc(100vh - 340px);
+  background: var(--colorNeutralBackground1, #ffffff);
 }
 
 .emptyState {
@@ -201,7 +204,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6b6b8a;
+  color: var(--colorNeutralForeground4, #707070);
   gap: 1rem;
 }
 
@@ -217,9 +220,9 @@
 .messageItem {
   margin-bottom: 0.75rem;
   padding: 0.75rem;
-  background: rgba(26, 26, 46, 0.5);
-  border-radius: 6px;
-  border-left: 3px solid #0078d4;
+  background: var(--colorNeutralBackground2, #fafafa);
+  border-radius: 4px;
+  border-left: 3px solid var(--colorBrandStroke1, #0078d4);
   animation: slideIn 0.3s ease;
 }
 
@@ -238,24 +241,24 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 0.5rem;
-  font-size: 0.75rem;
-  color: #6b6b8a;
+  font-size: 0.7rem;
+  color: var(--colorNeutralForeground3, #707070);
 }
 
 .messageTimestamp {
-  color: #10b981;
+  color: #0e7a0d;
 }
 
 .messagePartition {
-  color: #f59e0b;
+  color: #c4710b;
 }
 
 .messageOffset {
-  color: #8b5cf6;
+  color: #5c2d91;
 }
 
 .messageBody {
-  color: #e4e4e7;
+  color: var(--colorNeutralForeground1, #242424);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -269,16 +272,16 @@
 
 .helpText {
   font-size: 0.75rem;
-  color: #6b6b8a;
+  color: var(--colorNeutralForeground3, #707070);
   line-height: 1.5;
   padding: 0.75rem;
-  background: rgba(0, 120, 212, 0.1);
-  border-radius: 6px;
-  border: 1px solid rgba(0, 120, 212, 0.2);
+  background: var(--colorBrandBackground2, #ebf3fc);
+  border-radius: 4px;
+  border: 1px solid var(--colorBrandStroke2, #b4d6fa);
 }
 
 .helpText code {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--colorNeutralBackground3, #f0f0f0);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   font-size: 0.7rem;

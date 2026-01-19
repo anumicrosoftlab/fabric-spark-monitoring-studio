@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 import '../styles/globals.css';
-import Providers from '@/components/Providers';
+import ThemeProvider from '@/components/ThemeProvider';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'Heartbeat - Azure Event Hub Stream Viewer',
-  description: 'Real-time streaming data viewer for Azure Event Hubs',
+  title: 'Heartbeat - Fabric Real Time Intelligence Stream Viewer',
+  description: 'Real-time streaming data viewer for Fabric Real Time Intelligence.',
+  keywords: ['Fabric', 'Event Hub', 'Real Time Intelligence', 'RTI', 'Microsoft', 'Viewer'],
 };
 
 export default function RootLayout({
@@ -15,9 +18,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        <ThemeProvider>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header />
+            <main style={{ flex: 1 }}>
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

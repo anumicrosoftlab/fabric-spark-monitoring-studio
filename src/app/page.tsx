@@ -12,7 +12,6 @@ import {
   PlugConnected24Regular,
   PlugDisconnected24Regular,
   Delete24Regular,
-  Heart24Filled,
   Info24Regular,
 } from '@fluentui/react-icons';
 import styles from './page.module.css';
@@ -80,17 +79,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>
-          <Heart24Filled style={{ marginRight: '0.5rem', color: '#ef4444' }} />
-          Heartbeat
-        </h1>
-        <p className={styles.subtitle}>
-          Real-time Azure Event Hub Stream Viewer
-        </p>
-      </header>
-
       {/* Main Content */}
       <main className={styles.mainContent}>
         {/* Connection Panel */}
@@ -142,7 +130,7 @@ export default function Home() {
             </div>
             {error && (
               <div className={styles.statusRow}>
-                <span className={styles.statusLabel} style={{ color: '#ef4444' }}>
+                <span className={styles.statusLabel} style={{ color: '#c42b1c' }}>
                   Error: {error}
                 </span>
               </div>
@@ -186,7 +174,7 @@ export default function Home() {
               📺 Live Stream
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#a1a1aa' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={autoScroll}
