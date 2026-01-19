@@ -41,6 +41,26 @@
   line-height: 1.5;
 }
 
+.fabricSparkGlow {
+  font-weight: 600;
+  background: linear-gradient(135deg, #89e8ad 0%, #4ade80 50%, #22c55e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.4));
+  animation: subtleGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes subtleGlow {
+  0% {
+    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.5));
+  }
+}
+
 .badge {
   display: inline-block;
   background: rgba(74, 222, 128, 0.1);

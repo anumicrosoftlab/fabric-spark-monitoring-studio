@@ -129,7 +129,7 @@ export default function Home() {
           </svg>
           heartbeat
         </h1>
-        <p className={styles.tagline}>Stateful Stream Processing Demonstration with Fabric Spark.</p>
+        <p className={styles.tagline}>Stateful Stream Processing Demonstration with <span className={styles.fabricSparkGlow}>Fabric Spark</span>.</p>
         <span className={styles.badge}>Uses Fabric RTI EventStreams, Spark Structured Streaming with RocksDB</span>
       </header>
 
