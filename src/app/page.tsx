@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useEventHub } from '@/lib/useEventHub';
+import { Highlight, themes } from 'prism-react-renderer';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -273,9 +274,23 @@ export default function Home() {
                   {codeCopied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
-              <pre className={styles.codeContent}>
-                <code>{getSparkCodeWithConnection()}</code>
-              </pre>
+              <Highlight
+                theme={themes.nightOwl}
+                code={getSparkCodeWithConnection()}
+                language="python"
+              >
+                {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                  <pre className={styles.codeContent} style={{ ...style, background: 'transparent' }}>
+                    {tokens.map((line, i) => (
+                      <div key={i} {...getLineProps({ line })}>
+                        {line.map((token, key) => (
+                          <span key={key} {...getTokenProps({ token })} />
+                        ))}
+                      </div>
+                    ))}
+                  </pre>
+                )}
+              </Highlight>
               {!isCodeEnabled && (
                 <div className={styles.codeOverlay}>
                   <span>Configure Consumer Connection to enable</span>
@@ -364,7 +379,23 @@ export default function Home() {
                           <span className={styles.messagePartition}>Partition: {msg.partitionId}</span>
                           <span className={styles.messageSequence}>Seq: {msg.sequenceNumber}</span>
                         </div>
-                        <pre className={styles.messageBody}>{msg.body}</pre>
+                        <Highlight
+                          theme={themes.nightOwl}
+                          code={typeof msg.body === 'string' ? msg.body : JSON.stringify(msg.body, null, 2)}
+                          language="json"
+                        >
+                          {({ style, tokens, getLineProps, getTokenProps }) => (
+                            <pre className={styles.messageBody} style={{ ...style, background: 'transparent' }}>
+                              {tokens.map((line, i) => (
+                                <div key={i} {...getLineProps({ line })}>
+                                  {line.map((token, key) => (
+                                    <span key={key} {...getTokenProps({ token })} />
+                                  ))}
+                                </div>
+                              ))}
+                            </pre>
+                          )}
+                        </Highlight>
                       </div>
                     ))}
                     <div ref={streamEndRef} />

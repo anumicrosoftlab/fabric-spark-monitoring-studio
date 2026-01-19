@@ -283,6 +283,8 @@
 
 .stepContent {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .stepTitle {
@@ -297,6 +299,8 @@
   font-size: 0.95rem;
   line-height: 1.6;
   margin-bottom: 1rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .workflowArrow {
@@ -406,9 +410,14 @@
   margin-top: 1.5rem;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--colorNeutralStroke1, rgba(255,255,255,0.1));
+  border: 1px solid rgba(137, 232, 173, 0.2);
   position: relative;
   transition: opacity 0.3s;
+  max-width: 100%;
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .codeBlock.dimmed {
@@ -416,12 +425,12 @@
 }
 
 .codeHeader {
-  background: var(--colorNeutralBackground3, rgba(255,255,255,0.05));
+  background: rgba(255, 255, 255, 0.03);
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: 1px solid var(--colorNeutralStroke1, rgba(255,255,255,0.08));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .codeDots {
@@ -439,24 +448,28 @@
 .codeLabel {
   margin-left: auto;
   font-size: 0.75rem;
-  color: var(--colorNeutralForeground3, rgba(255,255,255,0.4));
+  color: #4ade80;
   font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
 }
 
 .copyButton {
-  background: var(--colorNeutralBackground3, rgba(255,255,255,0.1));
-  border: none;
-  color: var(--colorNeutralForeground3, rgba(255,255,255,0.6));
-  padding: 0.4rem 0.75rem;
-  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.15) 100%);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: #89e8ad;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
+  font-weight: 500;
   transition: all 0.2s;
 }
 
 .copyButton:hover:not(:disabled) {
-  background: rgba(74, 222, 128, 0.2);
-  color: #89e8ad;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.25) 0%, rgba(34, 197, 94, 0.25) 100%);
+  border-color: rgba(74, 222, 128, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
 }
 
 .copyButton:disabled {
@@ -465,25 +478,68 @@
 }
 
 .copyButton.copied {
-  background: rgba(34, 197, 94, 0.2);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.3) 100%);
+  border-color: rgba(34, 197, 94, 0.5);
   color: #22c55e;
 }
 
 .codeContent {
-  background: var(--colorNeutralBackground1, #0d0d0d);
+  background: rgba(10, 35, 25, 0.95);
   padding: 1.25rem;
-  overflow-x: auto;
+  overflow: auto;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
   line-height: 1.7;
-  color: var(--colorNeutralForeground2, #e0e0e0);
+  color: #e0e0e0;
   max-height: 400px;
-  overflow-y: auto;
   margin: 0;
+  white-space: pre;
+}
+
+/* Custom scrollbar for code block */
+.codeContent::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.codeContent::-webkit-scrollbar-track {
+  background: rgba(30, 30, 35, 0.5);
+  border-radius: 5px;
+}
+
+.codeContent::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #89e8ad 0%, #4ade80 50%, #22c55e 100%);
+  border-radius: 5px;
+  border: 2px solid rgba(30, 30, 35, 0.5);
+}
+
+.codeContent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a7f3c4 0%, #6ee7a0 50%, #4ade80 100%);
+}
+
+.codeContent::-webkit-scrollbar-corner {
+  background: rgba(30, 30, 35, 0.5);
 }
 
 .codeContent code {
   color: inherit;
+  display: block;
+}
+
+/* Light mode code block */
+:global([data-theme="light"]) .codeBlock {
+  background: rgba(10, 35, 25, 0.98);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+:global([data-theme="light"]) .codeHeader {
+  background: rgba(15, 45, 30, 0.95);
+  border-bottom-color: rgba(74, 222, 128, 0.15);
+}
+
+:global([data-theme="light"]) .codeContent {
+  background: rgba(10, 35, 25, 0.95);
+  color: #e0e0e0;
 }
 
 .codeOverlay {
@@ -501,16 +557,19 @@
 /* Stream Panel */
 .streamPanel {
   margin-top: 1.5rem;
-  background: var(--colorNeutralBackground1, #0d0d0d);
-  border: 1px solid var(--colorNeutralStroke1, rgba(255,255,255,0.1));
+  background: rgba(10, 35, 25, 0.95);
+  border: 1px solid rgba(74, 222, 128, 0.2);
   border-radius: 12px;
   overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .streamHeader {
   padding: 0.875rem 1.25rem;
-  background: var(--colorNeutralBackground2, rgba(255,255,255,0.03));
-  border-bottom: 1px solid var(--colorNeutralStroke1, rgba(255,255,255,0.08));
+  background: rgba(15, 45, 30, 0.8);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.15);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -616,14 +675,27 @@
 }
 
 .streamButton.clearButton {
-  background: transparent;
-  border-color: rgba(0,0,0,0.2);
-  color: rgba(0,0,0,0.6);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.7);
 }
 
-:global([data-theme="dark"]) .streamButton.clearButton {
-  border-color: rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.6);
+.streamButton.clearButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:global([data-theme="light"]) .streamButton.clearButton {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+:global([data-theme="light"]) .streamButton.clearButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
 }
 
 .streamError {
@@ -640,6 +712,27 @@
   overflow-y: auto;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
+  background: rgba(10, 35, 25, 0.95);
+}
+
+/* Custom scrollbar for stream panel */
+.streamContent::-webkit-scrollbar {
+  width: 10px;
+}
+
+.streamContent::-webkit-scrollbar-track {
+  background: rgba(15, 45, 30, 0.5);
+  border-radius: 5px;
+}
+
+.streamContent::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #89e8ad 0%, #4ade80 50%, #22c55e 100%);
+  border-radius: 5px;
+  border: 2px solid rgba(15, 45, 30, 0.5);
+}
+
+.streamContent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a7f3c4 0%, #6ee7a0 50%, #4ade80 100%);
 }
 
 .emptyState {
@@ -679,10 +772,16 @@
 .messageItem {
   margin-bottom: 0.75rem;
   padding: 0.75rem;
-  background: var(--colorNeutralBackground2, rgba(255,255,255,0.03));
+  background: rgba(74, 222, 128, 0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-radius: 6px;
   border-left: 3px solid #89e8ad;
   animation: slideIn 0.3s ease;
+}
+
+:global([data-theme="light"]) .messageItem {
+  background: rgba(74, 222, 128, 0.12);
 }
 
 @keyframes slideIn {
@@ -717,10 +816,14 @@
 }
 
 .messageBody {
-  color: var(--colorNeutralForeground1, rgba(255,255,255,0.9));
+  color: rgba(255,255,255,0.9);
   white-space: pre-wrap;
   word-break: break-word;
   margin: 0;
+}
+
+:global([data-theme="light"]) .messageBody {
+  color: rgba(255,255,255,0.85);
 }
 
 /* Open Source Section */
