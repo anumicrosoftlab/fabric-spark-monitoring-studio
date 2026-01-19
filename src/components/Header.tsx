@@ -32,68 +32,58 @@ const Header = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          {/* Microsoft Logo */}
-          <a
-            href="https://microsoft.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Microsoft loves streaming */}
+          <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              textDecoration: 'none',
-              color: isDark ? '#ffffff' : '#242424',
-              fontSize: '14px',
-              fontWeight: 600,
+              gap: '6px',
             }}
           >
-            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="10" height="10" fill="#F25022" />
-              <rect x="11" width="10" height="10" fill="#7FBA00" />
-              <rect y="11" width="10" height="10" fill="#00A4EF" />
-              <rect x="11" y="11" width="10" height="10" fill="#FFB900" />
-            </svg>
-            Microsoft
-          </a>
-
-          {/* Heartbeat Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
+            <a
+              href="https://microsoft.com"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '6px',
-                background: 'linear-gradient(135deg, #89e8ad 0%, #4ade80 50%, #22c55e 100%)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                gap: '8px',
+                textDecoration: 'none',
+                color: isDark ? '#ffffff' : '#242424',
+                fontSize: '14px',
+                fontWeight: 600,
               }}
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                  fill="#ffffff"
-                />
+              <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="10" height="10" fill="#F25022" />
+                <rect x="11" width="10" height="10" fill="#7FBA00" />
+                <rect y="11" width="10" height="10" fill="#00A4EF" />
+                <rect x="11" y="11" width="10" height="10" fill="#FFB900" />
               </svg>
-            </div>
+              Microsoft
+            </a>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ marginLeft: '2px' }}
+            >
+              <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="#ef4444"
+              />
+            </svg>
             <span
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 600,
-                background: 'linear-gradient(135deg, #89e8ad 0%, #4ade80 50%, #22c55e 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                color: isDark ? 'rgba(255,255,255,0.9)' : '#242424',
               }}
             >
-              heartbeat
+              streaming
             </span>
           </div>
         </div>

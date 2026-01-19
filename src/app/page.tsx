@@ -360,18 +360,31 @@ export default function Home() {
           </div>
         </div>
 
-        {/* GIF Placeholder 3 */}
-        <figure className={styles.demoGif}>
-          <img src="/consumer-creation.gif" alt="Consumer setup and live stream demonstration" />
-        </figure>
       </section>
 
       {/* Open Source Badge */}
       <section className={styles.openSource}>
-        <a href="https://github.com/microsoft/fabric-samples" className={styles.ossBadge} target="_blank" rel="noopener noreferrer">
-          Microsoft Fabric Samples
+        <div 
+          className={styles.fancyTextContainer}
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+            e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+          }}
+        >
+          <p className={styles.fancyText}>Built with Microsoft Fabric Real-Time Intelligence</p>
+        </div>
+        <a href="https://jumpstart.fabric.microsoft.com" className={styles.ossBadge} target="_blank" rel="noopener noreferrer">
+          <img 
+            src="https://jumpstart.fabric.microsoft.com/img/logo.svg" 
+            alt="Fabric Jumpstart" 
+            style={{ height: '20px', marginRight: '8px' }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+          Fabric Jumpstart
         </a>
-        <p>Built with Microsoft Fabric Real-Time Intelligence</p>
       </section>
     </div>
   );
