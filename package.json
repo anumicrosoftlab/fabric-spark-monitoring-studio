@@ -1,0 +1,35 @@
+{
+  "name": "heartbeat-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "serve": "npx serve out -l 28080",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@azure/core-auth": "^1.9.0",
+    "@azure/event-hubs": "^5.12.2",
+    "@fluentui/react-components": "^9.54.2",
+    "@fluentui/react-icons": "^2.0.245",
+    "buffer": "^6.0.3",
+    "next": "15.1.0",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "15.1.0",
+    "prettier": "^3.3.2",
+    "serve": "^14.2.5",
+    "typescript": "^5"
+  }
+}
