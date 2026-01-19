@@ -454,6 +454,17 @@
   font-weight: 300;
 }
 
+.producerCapMessage {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+:global([data-theme="light"]) .producerCapMessage {
+  color: rgba(0, 0, 0, 0.5);
+}
+
 .producerList {
   margin-top: 1rem;
   display: flex;

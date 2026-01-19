@@ -99,7 +99,10 @@ export default function Home() {
     return 'disconnected';
   };
 
+  const MAX_PRODUCERS = 5;
+
   const addProducer = () => {
+    if (producers.length >= MAX_PRODUCERS) return;
     // Find the next available ID (lowest unused integer starting from 1)
     const usedIds = new Set(producers.map(p => p.id));
     let nextId = 1;
@@ -378,12 +381,15 @@ export default function Home() {
               This named heartbeat producer will send Events to EventStream.
             </p>
             <button 
-              className={`${styles.addButton} ${producerWriteStatus !== 'connected' ? styles.disabled : ''}`}
+              className={`${styles.addButton} ${(producerWriteStatus !== 'connected' || producers.length >= MAX_PRODUCERS) ? styles.disabled : ''}`}
               onClick={addProducer}
-              disabled={producerWriteStatus !== 'connected'}
+              disabled={producerWriteStatus !== 'connected' || producers.length >= MAX_PRODUCERS}
             >
               <span className={styles.plusIcon}>+</span> Add Producer
             </button>
+            {producers.length >= MAX_PRODUCERS && (
+              <p className={styles.producerCapMessage}>Producers are capped at 5 to preserve browser responsiveness</p>
+            )}
             {producers.length > 0 && (
               <div className={styles.producerList}>
                 {producers.map((p) => (
