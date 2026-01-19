@@ -232,9 +232,12 @@ export default function Home() {
       </div>
 
       {/* Architecture Diagram */}
-      <figure className={styles.architectureFigure}>
-        <img src="/architecture.png" alt="Heartbeat architecture diagram" className={styles.architectureImage} />
-      </figure>
+      <section className={styles.workflow}>
+        <h2>Architecture</h2>
+        <figure className={styles.architectureFigure}>
+          <img src="/architecture.png" alt="Heartbeat architecture diagram" className={styles.architectureImage} />
+        </figure>
+      </section>
 
       {/* Demo Workflow Section */}
       <section className={styles.workflow}>
