@@ -52,7 +52,7 @@ const Footer = () => {
             color: isDark ? 'rgba(255,255,255,0.6)' : '#616161',
           }}
         >
-          This is an unofficial tool for demonstrating Real-Time Intelligence Streams. Built with the{' '}
+          This is an unofficial tool for demonstrating Fabric Spark Stream Processing. Built with the{' '}
           <a
             href="https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/eventhub/event-hubs"
             target="_blank"
