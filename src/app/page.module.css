@@ -118,8 +118,8 @@
   top: -3px;
   left: 50%;
   transform: translateX(-50%);
-  width: 566px;
-  height: 321px;
+  width: 734px;
+  height: 416px;
   max-width: calc(100% + 6px);
   border-radius: 14px;
   background: linear-gradient(
@@ -143,8 +143,8 @@
   top: -2px;
   left: 50%;
   transform: translateX(-50%);
-  width: 564px;
-  height: 319px;
+  width: 732px;
+  height: 414px;
   max-width: calc(100% + 4px);
   border-radius: 13px;
   background: linear-gradient(

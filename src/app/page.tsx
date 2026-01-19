@@ -350,8 +350,8 @@ export default function Home() {
       <section className={styles.workflow}>
         <div className={styles.videoContainer}>
           <iframe
-            width="560"
-            height="315"
+            width="728"
+            height="410"
             src="https://www.youtube.com/embed/qQ4EK0xTHA4?si=uiVYaqbxMOfBUyTM"
             title="YouTube video player"
             frameBorder="0"
