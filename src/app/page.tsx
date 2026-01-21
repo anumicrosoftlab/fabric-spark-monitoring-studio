@@ -703,6 +703,10 @@ export default function Home() {
 
         <div className={styles.workflowArrow}>↓</div>
 
+        <p className={styles.stepNote}>
+          Attach any <strong>Lakehouse</strong> to your Spark Notebook so the Spark Streaming Checkpoint and RocksDB State can be stored in OneLake, and paste the code:
+        </p>
+
         {/* GIF 3 - After Spark Code */}
         <figure className={styles.demoGif}>
           <img src="/spark-streaming.gif" alt="Spark streaming demonstration" />
