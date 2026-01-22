@@ -873,7 +873,7 @@ export default function Home() {
       {/* Open Source Badge */}
       <section className={styles.openSource}>
         <a 
-          href="https://jumpstart.fabric.microsoft.com" 
+          href="https://learn.microsoft.com/en-us/fabric/data-engineering/get-started-streaming" 
           className={styles.fancyTextContainer}
           target="_blank" 
           rel="noopener noreferrer"
@@ -885,7 +885,7 @@ export default function Home() {
             e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
           }}
         >
-          <span className={styles.fancyText}>View more interactive demos at Fabric Jumpstart</span>
+          <span className={styles.fancyText}>View more Spark Streaming patterns at the Fabric docs page</span>
         </a>
       </section>
     </div>
